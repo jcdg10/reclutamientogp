@@ -12,14 +12,19 @@ use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Datatables;
 use DB;
-use Mail;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use App\Events\NotificationEvent;
 use App\Events\NotificationFranchiseEvent;
+use App\Traits\EmailTrait;
+use App\Http\Requests\Users\UserStoreRequest;
+use App\Http\Requests\Users\UserUpdateRequest;
+use App\Http\Requests\Users\UserResetPasswordRequest;
 
 class UserController extends Controller
 {
+    use EmailTrait;
+
     public function index()
     {
         $users = DB::table('users')
@@ -130,57 +135,26 @@ class UserController extends Controller
         
     }
 
-    public function store(Request $request)
+    public function store(UserStoreRequest $request)
     {   
-        //if(auth()->user()->responsible == 1){
+        $password = $this->generateRandomString();
 
-            $validated = $request->validate([
-                'name' => ['required',
-                            'string',
-                            'max:255'
-                            ],
-                'email' => ['required',
-                            'email',
-                            'unique:users',
-                            'max:255'
-                            ],
-                'rol' => ['required']
-            ]);
-
-
-            $password = $this->generateRandomString();
-
-            $user = new User();
-            $user->name = $request->name;
-            $user->email = $request->email;
-            $user->password = Hash::make($password);
-            $user->roles_id = $request->rol;
-            $user->phone = $request->phone;
-            $user->status = 1;
+        $user = new User();
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->password = Hash::make($password);
+        $user->roles_id = $request->rol;
+        $user->phone = $request->phone;
+        $user->status = 1;
+        
+        if($user->save()){
             
-            if($user->save()){
-                //echo $request->name.' - '.$request->email.' - '.$request->password;
-                /*$notification = new Notification();
-                $notification->catalogue_notifications_id = 1;
-                $notification->date = date('Y-m-d H:i:s');
-                $notification->users_id = DB::getPdo()->lastInsertId();
-                $notification->save();
-
-                event(new NotificationEvent("1",$request->franchise));
-
-                event(new NotificationFranchiseEvent("1",$request->franchise));*/
-                
-                $men = $this->sendWelcome($request->name, $request->email, $password);
-                return "1";
-            }
-            else{
-                return "0";
-            }
-        /*}
+            $men = $this->sendWelcome($request->name, $request->email, $password);
+            return "1";
+        }
         else{
-            return 2;
-        }*/
-            
+            return "0";
+        }
     }
 
     /**
@@ -234,56 +208,26 @@ class UserController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(UserUpdateRequest $request, $id)
     {   
-        //if(auth()->user()->responsible == 1){    
-            $validated = $request->validate([
-                    'name' => ['required',
-                            'string',
-                            'max:255'
-                            ],
-                    'email' => ['required',
-                            'email',
-                            'unique:users,email,'.$id,
-                            'max:255'
-                            ],
-                    'password' => [
-                                function ($attribute, $value, $fail) {
-                                        if (strlen($value) > 0) {
-                                            if(strlen($value) < 10) {
-                                                $fail('El campo password debe tener al menos 10 caracteres.');
-                                            }
-                                            if(strlen($value) > 40) {
-                                                $fail('El campo password no puede tener más de 40 caracteres.');
-                                            }
-                                        }
-                                }
-                            ],
-                    'rol' => ['required']
-                ]);
+        
+        $user = User::findOrFail($id);
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->roles_id = $request->rol;
+        $user->phone = $request->phone;
 
-            $user = User::findOrFail($id);
-            $user->name = $request->name;
-            $user->email = $request->email;
-            $user->roles_id = $request->rol;
-            $user->phone = $request->phone;
+        if(trim($request->password) != ''){
+            $user->password = Hash::make($request->password);
+        }
 
-            if(trim($request->password) != ''){
-                $user->password = Hash::make($request->password);
-            }
-
-            if($user->update()){
-                return "1";
-            }
-            else{
-                return "0";
-            }
-        /*}
+        if($user->update()){
+            return "1";
+        }
         else{
-            return 2;
-        }*/
-        
-        
+            return "0";
+        }
+
     }
 
     /**
@@ -329,36 +273,6 @@ class UserController extends Controller
         return view('autenticacion.recover');
     }
 
-    public function sendWelcome($nombreUsuario, $email, $password){
-
-        $request = new \Illuminate\Http\Request();
-        $action_link = route('showDash');
-        $base_url = route('showDash');
-        $request->email = $email;
-        $request->name_user = $nombreUsuario;
-       
-        try{
-            if(Mail::send('email.welcome',['base_url'=>$base_url,'action_link'=>$action_link,'nombreUsuario' => $nombreUsuario,'emailUsuario' => $email, 'password' => $password], function($message) use ($request){
-                    $message->from(env('MAIL_USERNAME'),env('APP_NAME'));
-                    $message->to($request->email, $request->name_user)
-                            ->subject('Bienvenido al '.env('APP_NAME'));
-                    
-            })){
-                return 1;
-            }
-            else{
-                return 0;
-            }
-        }
-        catch (\Throwable $th) {
-
-            return $th;
-
-        }
-
-       return 0;
-   }
-
     public function sendResetLink(Request $request){
         $request->validate([
             'email'=>'required|email|exists:users,email'
@@ -368,7 +282,7 @@ class UserController extends Controller
         $request->name_user = $user->name;
 
         $token = \Str::random(64);
-        \DB::table('password_resets')->insert([
+        DB::table('password_resets')->insert([
               'email'=>$request->email,
               'token'=>$token,
               'created_at'=>Carbon::now(),
@@ -379,26 +293,11 @@ class UserController extends Controller
 
         $body = "Recibimos tu petición para restablecer la contraseña en <b>".env('APP_NAME')."</b> asociado con el correo ".$request->email.". Tu puedes restablecer la contraseña al presionar el botón abajo";
     
-        try{
-            if(\Mail::send('email.email-forgot',['base_url'=>$base_url,'action_link'=>$action_link,'body'=>$body], function($message) use ($request){
-                    $message->from(env('MAIL_USERNAME'),env('APP_NAME'));
-                    $message->to($request->email, $request->name_user)
-                            ->subject('Restablecer contraseña');
-                    
-            })){
-                return 1;
-            }
-            else{
-                return 0;
-            }
-        }
-        catch (\Throwable $th) {
+        $email = $request->email;
+        $name_user = $request->name_user;
 
-            return $th;
+        return $this->sendEmailResetLink($base_url, $action_link, $body, $email, $name_user);
 
-        }
-
-       return 0;
    }
 
    public function showResetForm(Request $request, $token = null){
@@ -415,12 +314,7 @@ class UserController extends Controller
        return view('autenticacion.reset')->with(['token'=>$request->token,'email'=>$request->email]);
    }
 
-   public function resetPassword(Request $request){
-       $request->validate([
-           'email'=>'required|email|exists:users,email',
-           'password'=>'required|min:10|max:40|confirmed',
-           'password_confirmation'=>'required',
-       ]);
+   public function resetPassword(UserResetPasswordRequest $request){
 
        $check_token = \DB::table('password_resets')->where([
            'email'=>$request->email,

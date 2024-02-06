@@ -43,13 +43,13 @@
                                                             <table width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-top: 20px;">
                                                                 <tr>
                                                                     <td style="font-size:24px; font-weight: bold; color:#2D3436; min-width:auto !important; text-align:center; letter-spacing: -0.02em; padding-bottom: 8px;">
-                                                                        Bienvenido {{ $nombreUsuario }}
+                                                                        Saludos {{ $nombreUsuario }}
                                                                     </td>
                                                                 </tr>
 
                                                                 <tr>
                                                                     <td style="font-size:14px; color:#636E72; min-width:auto !important; line-height: 20px; text-align:center; padding-bottom: 12px;">
-                                                                        Has sido agregado al {{ env('APP_NAME')}}
+                                                                        Fuiste asignado a un nuevo requerimiento.
                                                                     </td>
                                                                 </tr>
 
@@ -59,31 +59,6 @@
                                                                             <tr>
                                                                                 <td style="padding-bottom: 22px;">
                                                                                     <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                                                                                        <tr>
-                                                                                            <td style="text-align:center; padding-bottom: 32px;">
-                                                                                                <a href="#" style="font-size: 16px;
-                                                                                                    opacity: 1;
-                                                                                                    visibility: visible;
-                                                                                                    transition: opacity .5s ease;
-                                                                                                    font-weight: 700;
-                                                                                                    font-size: 25px;
-                                                                                                    color: #000865;
-                                                                                                ">
-                                                                                                    <span style="color: #6571ff;
-                                                                                                        font-weight: 300;
-                                                                                                    ">RE</span>CLUTAMIENTO
-                                                                                                </a>
-                                                                                            </td>
-                                                                                        </tr>
-
-                                                                                        <tr>
-                                                                                            <td style="font-size:14px; color:#636E72; min-width:auto !important; line-height: 20px; text-align:center; padding: 0 25px 32px;">
-                                                                                                Tu cuenta está activa y puedes ingresar al sistema. Tus datos de ingreso son los siguientes:<br><br>
-                                                                                                
-                                                                                                Usuario: {{ $emailUsuario }} <br>
-                                                                                                Contraseña: {{ $password }} <br>
-                                                                                            </td>
-                                                                                        </tr>
 
                                                                                         <tr>
                                                                                             <td align="center" style="word-break: break-word; font-family: &quot;Nunito Sans&quot;, Helvetica, Arial, sans-serif; font-size: 16px;">

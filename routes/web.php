@@ -16,13 +16,182 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ApplicantController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\RecruiterController;
-use App\Http\Controllers\RequestController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\CiudadController;
 use App\Http\Controllers\EspecialidadController;
 use App\Http\Controllers\ServicioRequeridoController;
 
+use App\Http\Controllers\Request\RequestController;
+use App\Http\Controllers\Request\RequestGeneralController;
+use App\Http\Controllers\Request\RequestPersonalController;
+use App\Http\Controllers\Request\RequestAcademicController;
+use App\Http\Controllers\Request\RequestJobController;
+use App\Http\Controllers\Request\RequestAdditionalController;
+use App\Http\Controllers\Request\RequestEconomicController;
+use App\Http\Controllers\Request\RequestProcessController;
+use App\Http\Controllers\Request\RequestFinalController;
+
+Route::get('/login',[UserController::class,'showLogin'])->name('show.login');
+Route::post('/login', [LoginController::class,'login'])->name('login');
+Route::get('/recuperar-password', [UserController::class,'showForgotForm'])->name('recuperar-password.form');
+Route::post('/recuperar-password',[UserController::class,'sendResetLink'])->name('recuperar-password.form.link');
+Route::get('/recuperar-password/reset',[UserController::class,'showResetForm'])->name('reset.password.form');
+Route::post('/password/reset/{token}',[UserController::class,'resetPassword'])->name('reset.password');
+
+
+Route::group(['middleware' => ['auth']], function() {
+
+    Route::get('/',[DashboardController::class,'showDash'])->name('showDash');
+    Route::get('/perfil',[UserController::class,'profile'])->name('profile');
+
+    /*USERS*/
+    Route::resource('usersactions', UserController::class);
+    Route::put('/usersedit',[UserController::class,'update'])->name('updateusers');
+    Route::get('usuarios',[UserController::class,'showUsuarios'])->name('showUsuarios');
+    Route::get('index',[UserController::class,'index'])->name('index');
+
+    /*APPLICANT*/
+    Route::resource('applicantactions', ApplicantController::class);
+    Route::put('/applicantedit',[ApplicantController::class,'update'])->name('update');
+    Route::get('candidatos',[ApplicantController::class,'showApplicant'])->name('showApplicant');
+    Route::get('applicant.index',[ApplicantController::class,'index'])->name('index');
+    Route::post('/processapplicantdataget',[ApplicantController::class,'processapplicantdataget'])->name('processapplicantdataget');
+    Route::get('/addcandidatovacante',[ApplicantController::class,'addCandidatoVacante'])->name('addCandidatoVacante');
+
+    Route::post('/applicantacademico',  [ApplicantController::class,'addAcademico']);
+    Route::post('applicant.getApplicantAcademic',  [ApplicantController::class,'getAcademic']);
+    Route::get('/applicantacademico/{id}',  [ApplicantController::class,'getEspecificAcademic']);
+    Route::delete('/applicantacademico/{id}',  [ApplicantController::class,'deleteAcademico']);
+    Route::post('/applicantacademico/{id}',  [ApplicantController::class,'editAcademico']);
+
+    Route::post('/applicantexperience',  [ApplicantController::class,'addExperience']);
+    Route::post('applicant.getApplicantExperience', [ApplicantController::class,'getApplicantExperience']);
+    Route::get('/applicantexperience/{id}',  [ApplicantController::class,'getExperience']);
+    Route::delete('/applicantexperience/{id}',  [ApplicantController::class,'deleteExperience']);
+    Route::post('/applicantexperience/{id}',  [ApplicantController::class,'editExperience']);
+
+
+    /*CLIENTS*/
+    Route::resource('clientactions', ClientController::class);
+    Route::put('/clientedit',[ClientController::class,'update'])->name('update');
+    Route::get('clientes',[ClientController::class,'showClient'])->name('showClient');
+    Route::get('client.index',[ClientController::class,'index'])->name('index');
+
+    /*RECRUITER*/
+    Route::resource('recruiteractions', RecruiterController::class);
+    Route::put('/recruiteredit',[RecruiterController::class,'update'])->name('update');
+    Route::get('reclutador',[RecruiterController::class,'showRecruiter'])->name('showRecruiter');
+    Route::get('recruiter.index',[RecruiterController::class,'index'])->name('index');
+
+    /*CITY*/
+    Route::resource('cityactions', CiudadController::class);
+    Route::put('/cityedit',[CiudadController::class,'update'])->name('update');
+    Route::get('ciudad',[CiudadController::class,'showCiudad'])->name('showCiudad');
+    Route::get('city.index',[CiudadController::class,'index'])->name('index');
+
+    /*SPECIALITY*/
+    Route::resource('specialtyactions', EspecialidadController::class);
+    Route::put('/specialtyedit',[EspecialidadController::class,'update'])->name('update');
+    Route::get('especialidad',[EspecialidadController::class,'showEspecialidad'])->name('showEspecialidad');
+    Route::get('specialty.index',[EspecialidadController::class,'index'])->name('index');
+
+    /*SERVICIOS REQUERIDOS*/
+    Route::resource('requiredserviceactions', ServicioRequeridoController::class);
+    Route::put('/requiredserviceedit',[ServicioRequeridoController::class,'update'])->name('update');
+    Route::get('serviciorequerido',[ServicioRequeridoController::class,'showServicioRequerido'])->name('showServicioRequerido');
+    Route::get('requiredservice.index',[ServicioRequeridoController::class,'index'])->name('index');
+
+    /*REPORT*/
+    Route::resource('reportactions', ReportController::class);
+    Route::put('/reportedit',[ReportController::class,'update'])->name('update');
+    Route::get('reporte',[ReportController::class,'showReport'])->name('showReport');
+    Route::get('report.index',[ReportController::class,'index'])->name('index');
+    Route::get('/reportedownload/{id}',[ReportController::class,'download'])->name('download');
+    Route::post('searchreport',[ReportController::class,'searchReport'])->name('searchReport');
+    Route::post('searchdatachart',[ReportController::class,'searchDataChart'])->name('searchDataChart');
+
+    /*VACANT REQUERIMIENTO*/
+    Route::resource('requestactions', RequestController::class);
+    Route::put('/requestedit',[RequestController::class,'update'])->name('update');
+    Route::get('requerimiento',[RequestController::class,'showRequest'])->name('showRequest');
+    Route::get('requerimiento.index',[RequestController::class,'index'])->name('index');
+    Route::get('/getinfoclient/{id}',[RequestController::class,'getInfoClient'])->name('getInfoClient');
+
+    //GENERAL DATA
+    Route::post('/generaldata',[RequestGeneralController::class,'generalData'])->name('generalData');
+    Route::post('/generaldataedit',[RequestGeneralController::class,'generalDataEdit'])->name('generalDataEdit');
+    Route::get('/generaldataget/{id}',[RequestGeneralController::class,'generalDataGet'])->name('generalDataGet');
+
+    //PERSONAL DATA
+    Route::post('/personaldata',[RequestPersonalController::class,'personalData'])->name('personalData');
+    Route::post('/personaldataedit',[RequestPersonalController::class,'personalDataEdit'])->name('personalDataEdit');
+    Route::get('/personaldataget/{id}',[RequestPersonalController::class,'personalDataGet'])->name('personalDataGet');
+
+    //ACADEMIC DATA
+    Route::post('/academicdata',[RequestAcademicController::class,'academicData'])->name('academicData');
+    Route::post('/academicdataedit',[RequestAcademicController::class,'academicDataEdit'])->name('academicDataEdit');
+    Route::get('/academicdataget/{id}',[RequestAcademicController::class,'academicDataGet'])->name('academicDataGet');
+
+    //JOB DATA
+    Route::post('/jobdata',[RequestJobController::class,'jobData'])->name('jobData');
+    Route::post('/jobdataedit',[RequestJobController::class,'jobDataEdit'])->name('jobDataEdit');
+    Route::get('/jobdataget/{id}',[RequestJobController::class,'jobDataGet'])->name('jobDataGet');
+
+    //ADDIOTIONAL DATA
+    Route::post('/additionaldata',[RequestAdditionalController::class,'additionalData'])->name('additionalData');
+    Route::post('/additionaldataedit',[RequestAdditionalController::class,'additionalDataEdit'])->name('additionalDataEdit');
+    Route::get('/additionaldataget/{id}',[RequestAdditionalController::class,'additionalDataGet'])->name('additionalDataGet');
+
+    //ECONOMIC DATA
+    Route::post('/economicdata',[RequestEconomicController::class,'economicData'])->name('economicData');
+    Route::post('/economicdataedit',[RequestEconomicController::class,'economicDataEdit'])->name('economicDataEdit');
+    Route::get('/economicdataget/{id}',[RequestEconomicController::class,'economicDataGet'])->name('economicDataGet');
+
+    //PROCESS DATA
+    Route::post('/processdata',[RequestProcessController::class,'processData'])->name('processData');
+    Route::post('/processdataedit',[RequestProcessController::class,'processDataEdit'])->name('processDataEdit');
+    Route::get('/processdataget/{id}',[RequestProcessController::class,'processDataGet'])->name('processDataGet');
+
+    //FINAL DATA
+    Route::post('/finaldata',[RequestFinalController::class,'finalData'])->name('finalData');
+    Route::post('/finaldataedit',[RequestFinalController::class,'finalDataEdit'])->name('finalDataEdit');
+    Route::get('/finaldataget/{id}',[RequestFinalController::class,'finalDataGet'])->name('finalDataGet');
+
+    //to update the information
+    Route::post('/clientdataedit',[RequestController::class,'clientDataEdit'])->name('clientDataEdit');
+    
+    //to get the information
+    Route::get('/clientdataget/{id}',[RequestController::class,'clientDataGet'])->name('clientDataGet');
+    
+    //accept requirement
+    Route::get('/statusrequirement',[RequestController::class,'statusRequirement'])->name('statusRequirement');
+    Route::get('/getrecruitment',[RequestController::class,'getRecruitment'])->name('getRecruitment');
+    Route::post('/getapplicant',[RequestController::class,'getApplicant'])->name('getApplicant');
+    Route::post('/saverecruitment',[RequestController::class,'saveRecruitment'])->name('saveRecruitment');
+    Route::post('/saveapplicant',[RequestController::class,'saveApplicant'])->name('saveApplicant');
+    //PDF
+    Route::post('vacant.getpdf', [RequestController::class,'getPdf']);
+    //Validate information
+    Route::get('/validateinformation/{id}',[RequestController::class,'validateInformation'])->name('validateInformation');
+    //add candidates
+    Route::get('addapplicant.index',[RequestController::class,'addapplicant'])->name('addapplicant');
+    Route::get('deleteapplicant.index',[RequestController::class,'deleteapplicant'])->name('deleteapplicant');
+    Route::post('/addApplicantNew',[RequestController::class,'addApplicantNew'])->name('addApplicantNew');
+    Route::delete('/deleteApplicantDo/{id}',[RequestController::class,'deleteApplicantDo'])->name('deleteApplicantDo'); 
+    
+    /*ROLE*/
+    Route::resource('roleactions', RoleController::class);
+    Route::post('/getPermisosModulo/{id}',[RoleController::class,'getPermisosModulo'])->name('getPermisosModulo');
+    Route::post('/modifypermissions',[RoleController::class,'modifyPermissions'])->name('modifyPermissions');
+    Route::put('/roleedit',[RoleController::class,'update'])->name('update');
+    Route::get('perfiles',[RoleController::class,'showRole'])->name('showRole');
+    Route::get('role.index',[RoleController::class,'index'])->name('index');
+});
+
+Route::get('/logout', 'App\Http\Controllers\LogoutController@perform')->name('logout.perform');
+
+/*
 Route::group(['prefix' => 'email'], function(){
     Route::get('inbox', function () { return view('pages.email.inbox'); });
     Route::get('read', function () { return view('pages.email.read'); });
@@ -106,147 +275,8 @@ Route::group(['prefix' => 'general'], function(){
 Route::group(['prefix' => 'auth'], function(){
     Route::get('login', function () { return view('pages.auth.login'); });
     Route::get('register', function () { return view('pages.auth.register'); });
-});
+});*/
 
-
-Route::get('/login',[UserController::class,'showLogin'])->name('show.login');
-Route::post('/login', [LoginController::class,'login'])->name('login');
-Route::get('/recuperar-password', [UserController::class,'showForgotForm'])->name('recuperar-password.form');
-Route::post('/recuperar-password',[UserController::class,'sendResetLink'])->name('recuperar-password.form.link');
-Route::get('/recuperar-password/reset',[UserController::class,'showResetForm'])->name('reset.password.form');
-Route::post('/password/reset/{token}',[UserController::class,'resetPassword'])->name('reset.password');
-
-
-Route::group(['middleware' => ['auth']], function() {
-
-    Route::get('/',[DashboardController::class,'showDash'])->name('showDash');
-    Route::get('/perfil',[UserController::class,'profile'])->name('profile');
-
-    /*USERS*/
-    Route::resource('usersactions', UserController::class);
-    Route::put('/usersedit',[UserController::class,'update'])->name('update');
-    Route::get('usuarios',[UserController::class,'showUsuarios'])->name('showUsuarios');
-    Route::get('index',[UserController::class,'index'])->name('index');
-
-    /*APPLICANT*/
-    Route::resource('applicantactions', ApplicantController::class);
-    Route::put('/applicantedit',[ApplicantController::class,'update'])->name('update');
-    Route::get('candidatos',[ApplicantController::class,'showApplicant'])->name('showApplicant');
-    Route::get('applicant.index',[ApplicantController::class,'index'])->name('index');
-    Route::post('/processapplicantdataget',[ApplicantController::class,'processapplicantdataget'])->name('processapplicantdataget');
-    Route::get('/addcandidatovacante',[ApplicantController::class,'addCandidatoVacante'])->name('addCandidatoVacante');
-
-    Route::post('/applicantacademico',  [ApplicantController::class,'addAcademico']);
-    Route::post('applicant.getApplicantAcademic',  [ApplicantController::class,'getAcademic']);
-    Route::get('/applicantacademico/{id}',  [ApplicantController::class,'getEspecificAcademic']);
-    Route::delete('/applicantacademico/{id}',  [ApplicantController::class,'deleteAcademico']);
-    Route::post('/applicantacademico/{id}',  [ApplicantController::class,'editAcademico']);
-
-    Route::post('/applicantexperience',  [ApplicantController::class,'addExperience']);
-    Route::post('applicant.getApplicantExperience', [ApplicantController::class,'getApplicantExperience']);
-    Route::get('/applicantexperience/{id}',  [ApplicantController::class,'getExperience']);
-    Route::delete('/applicantexperience/{id}',  [ApplicantController::class,'deleteExperience']);
-    Route::post('/applicantexperience/{id}',  [ApplicantController::class,'editExperience']);
-
-
-    /*CLIENTS*/
-    Route::resource('clientactions', ClientController::class);
-    Route::put('/clientedit',[ClientController::class,'update'])->name('update');
-    Route::get('clientes',[ClientController::class,'showClient'])->name('showClient');
-    Route::get('client.index',[ClientController::class,'index'])->name('index');
-
-    /*RECRUITER*/
-    Route::resource('recruiteractions', RecruiterController::class);
-    Route::put('/recruiteredit',[RecruiterController::class,'update'])->name('update');
-    Route::get('reclutador',[RecruiterController::class,'showRecruiter'])->name('showRecruiter');
-    Route::get('recruiter.index',[RecruiterController::class,'index'])->name('index');
-
-    /*CIUDAD*/
-    Route::resource('cityactions', CiudadController::class);
-    Route::put('/cityedit',[CiudadController::class,'update'])->name('update');
-    Route::get('ciudad',[CiudadController::class,'showCiudad'])->name('showCiudad');
-    Route::get('city.index',[CiudadController::class,'index'])->name('index');
-
-    /*ESPECIALIDAD*/
-    Route::resource('specialtyactions', EspecialidadController::class);
-    Route::put('/specialtyedit',[EspecialidadController::class,'update'])->name('update');
-    Route::get('especialidad',[EspecialidadController::class,'showEspecialidad'])->name('showEspecialidad');
-    Route::get('specialty.index',[EspecialidadController::class,'index'])->name('index');
-
-    /*SERVICIOS REQUERIDOS*/
-    Route::resource('requiredserviceactions', ServicioRequeridoController::class);
-    Route::put('/requiredserviceedit',[ServicioRequeridoController::class,'update'])->name('update');
-    Route::get('serviciorequerido',[ServicioRequeridoController::class,'showServicioRequerido'])->name('showServicioRequerido');
-    Route::get('requiredservice.index',[ServicioRequeridoController::class,'index'])->name('index');
-
-    /*REPORT*/
-    Route::resource('reportactions', ReportController::class);
-    Route::put('/reportedit',[ReportController::class,'update'])->name('update');
-    Route::get('reporte',[ReportController::class,'showReport'])->name('showReport');
-    Route::get('report.index',[ReportController::class,'index'])->name('index');
-    Route::get('/reportedownload/{id}',[ReportController::class,'download'])->name('download');
-    Route::post('searchreport',[ReportController::class,'searchReport'])->name('searchReport');
-    Route::post('searchdatachart',[ReportController::class,'searchDataChart'])->name('searchDataChart');
-
-    /*VACANT REQUERIMIENTO*/
-    Route::resource('requestactions', RequestController::class);
-    Route::put('/requestedit',[RequestController::class,'update'])->name('update');
-    Route::get('requerimiento',[RequestController::class,'showRequest'])->name('showRequest');
-    Route::get('requerimiento.index',[RequestController::class,'index'])->name('index');
-    Route::get('/getinfoclient/{id}',[RequestController::class,'getInfoClient'])->name('getInfoClient');
-    Route::post('/generaldata',[RequestController::class,'generalData'])->name('generalData');
-    Route::post('/personaldata',[RequestController::class,'personalData'])->name('personalData');
-    Route::post('/academicdata',[RequestController::class,'academicData'])->name('academicData');
-    Route::post('/jobdata',[RequestController::class,'jobData'])->name('jobData');
-    Route::post('/additionaldata',[RequestController::class,'additionalData'])->name('additionalData');
-    Route::post('/economicdata',[RequestController::class,'economicData'])->name('economicData');
-    Route::post('/processdata',[RequestController::class,'processData'])->name('processData');
-    Route::post('/finaldata',[RequestController::class,'finalData'])->name('finalData');
-    //to update the information
-    Route::post('/clientdataedit',[RequestController::class,'clientDataEdit'])->name('clientDataEdit');
-    Route::post('/generaldataedit',[RequestController::class,'generalDataEdit'])->name('generalDataEdit');
-    Route::post('/personaldataedit',[RequestController::class,'personalDataEdit'])->name('personalDataEdit');
-    Route::post('/academicdataedit',[RequestController::class,'academicDataEdit'])->name('academicDataEdit');
-    Route::post('/jobdataedit',[RequestController::class,'jobDataEdit'])->name('jobDataEdit');
-    Route::post('/additionaldataedit',[RequestController::class,'additionalDataEdit'])->name('additionalDataEdit');
-    Route::post('/economicdataedit',[RequestController::class,'economicDataEdit'])->name('economicDataEdit');
-    Route::post('/processdataedit',[RequestController::class,'processDataEdit'])->name('processDataEdit');
-    Route::post('/finaldataedit',[RequestController::class,'finalDataEdit'])->name('finalDataEdit');
-    //to get the information
-    Route::get('/clientdataget/{id}',[RequestController::class,'clientDataGet'])->name('clientDataGet');
-    Route::get('/generaldataget/{id}',[RequestController::class,'generalDataGet'])->name('generalDataGet');
-    Route::get('/personaldataget/{id}',[RequestController::class,'personalDataGet'])->name('personalDataGet');
-    Route::get('/academicdataget/{id}',[RequestController::class,'academicDataGet'])->name('academicDataGet');
-    Route::get('/jobdataget/{id}',[RequestController::class,'jobDataGet'])->name('jobDataGet');
-    Route::get('/additionaldataget/{id}',[RequestController::class,'additionalDataGet'])->name('additionalDataGet');
-    Route::get('/economicdataget/{id}',[RequestController::class,'economicDataGet'])->name('economicDataGet');
-    Route::get('/processdataget/{id}',[RequestController::class,'processDataGet'])->name('processDataGet');
-    Route::get('/finaldataget/{id}',[RequestController::class,'finalDataGet'])->name('finalDataGet');
-    //accept requirement
-    Route::get('/statusrequirement',[RequestController::class,'statusRequirement'])->name('statusRequirement');
-    Route::get('/getrecruitment',[RequestController::class,'getRecruitment'])->name('getRecruitment');
-    Route::post('/getapplicant',[RequestController::class,'getApplicant'])->name('getApplicant');
-    Route::post('/saverecruitment',[RequestController::class,'saveRecruitment'])->name('saveRecruitment');
-    Route::post('/saveapplicant',[RequestController::class,'saveApplicant'])->name('saveApplicant');
-    //PDF
-    Route::post('vacant.getpdf', [RequestController::class,'getPdf']);
-    //Validate information
-    Route::get('/validateinformation/{id}',[RequestController::class,'validateInformation'])->name('validateInformation');
-    //add candidates
-    Route::get('addapplicant.index',[RequestController::class,'addapplicant'])->name('addapplicant');
-    Route::get('deleteapplicant.index',[RequestController::class,'deleteapplicant'])->name('deleteapplicant');
-    Route::post('/addApplicantNew',[RequestController::class,'addApplicantNew'])->name('addApplicantNew');
-    Route::delete('/deleteApplicantDo/{id}',[RequestController::class,'deleteApplicantDo'])->name('deleteApplicantDo'); 
-    /*ROLE*/
-    Route::resource('roleactions', RoleController::class);
-    Route::post('/getPermisosModulo/{id}',[RoleController::class,'getPermisosModulo'])->name('getPermisosModulo');
-    Route::post('/modifypermissions',[RoleController::class,'modifyPermissions'])->name('modifyPermissions');
-    Route::put('/roleedit',[RoleController::class,'update'])->name('update');
-    Route::get('perfiles',[RoleController::class,'showRole'])->name('showRole');
-    Route::get('role.index',[RoleController::class,'index'])->name('index');
-});
-
-Route::get('/logout', 'App\Http\Controllers\LogoutController@perform')->name('logout.perform');
 
 Route::group(['prefix' => 'error'], function(){
     Route::get('404', function () { return view('pages.error.404'); });

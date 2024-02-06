@@ -463,7 +463,7 @@
       let responsable;
 
       //validar name
-      if(name == '' || name == null){
+     /* if(name == '' || name == null){
         $("#invalid-name-required-Edit").addClass("showFeedback");
         erroresEdit++;
       }
@@ -525,7 +525,7 @@
         }, 5000);
         return;
       }
-
+*/
       $("#modificarUsuario").attr("disabled",true);
       $("#cancelarModificarUsuario").attr("disabled",true);
       $("#loadingSEdit").css("visibility","visible");
