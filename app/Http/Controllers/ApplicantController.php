@@ -10,6 +10,7 @@ use App\Models\Applicant;
 use App\Models\Experience;
 use Illuminate\Http\Request;
 use App\Models\CandidatosProgreso;
+use App\Models\CandidatoDocumentacion;
 use App\Models\Requirement\GeneralData;
 use App\Models\Requirement\ProcesoData;
 use Illuminate\Support\Facades\Validator;
@@ -169,78 +170,91 @@ class ApplicantController extends Controller
 
     public function store(Request $request)
     {   
-        //if(auth()->user()->responsible == 1){
-            $validated = $request->validate([
-                'names' => ['required',
-                            'string',
-                            'max:45'
-                            ],
-                'lastnames' => ['required',
-                            'string',
-                            'max:45'
-                            ],
-                'age' => ['required',
-                            'integer'
-                            ],
-                'phone' => ['required',
-                            'max:10'
-                            ],
-                'correo' => ['required',
-                            'email',
-                            'unique:candidatos',
-                            'max:80'
-                            ],
-                'city' => ['required',
-                            'max:45'
-                            ],
-                'pretensions' => ['required'],
-                'profile' => ['required',
-                            'string',
-                            'max:45'
-                            ],
-                'specialty' => ['required'
-                            ],
-                'applicant_status' => ['required'
-                            ],
-            ]);
-            
-            $applicant = new Applicant();
-            $applicant->nombres = $request->names;
-            $applicant->apellidos = $request->lastnames;
-            $applicant->edad = $request->age;
-            $applicant->telefono = $request->phone;
-            $applicant->correo = $request->correo;
-            $applicant->ciudad = $request->city;
-            $applicant->pretensiones = $request->pretensions;
-            $applicant->perfil = $request->profile;
-            $applicant->especialidad = $request->specialty;
-            $applicant->estatus_candidatos = $request->applicant_status;
-            $applicant->fechaalta = Carbon::now();
-            $applicant->fechamod = Carbon::now();
-            $applicant->estatus = 1;
-            
-            if($applicant->save()){
-                //echo $request->name.' - '.$request->email.' - '.$request->password;
-                /*$notification = new Notification();
-                $notification->catalogue_notifications_id = 1;
-                $notification->date = date('Y-m-d H:i:s');
-                $notification->users_id = DB::getPdo()->lastInsertId();
-                $notification->save();
+        $validated = $request->validate([
+            'names' => ['required',
+                        'string',
+                        'max:45'
+                        ],
+            'lastnames' => ['required',
+                        'string',
+                        'max:45'
+                        ],
+            'age' => ['required',
+                        'integer'
+                        ],
+            'phone' => ['required',
+                        'max:10'
+                        ],
+            'correo' => ['required',
+                        'email',
+                        'unique:candidatos',
+                        'max:80'
+                        ],
+            'city' => ['required',
+                        'max:45'
+                        ],
+            'pretensions' => ['required'],
+            'profile' => ['required',
+                        'string',
+                        'max:45'
+                        ],
+            'specialty' => ['required'
+                        ],
+            'applicant_status' => ['required'
+                        ],
+        ]);
+        
+        $applicant = new Applicant();
+        $applicant->nombres = $request->names;
+        $applicant->apellidos = $request->lastnames;
+        $applicant->edad = $request->age;
+        $applicant->telefono = $request->phone;
+        $applicant->correo = $request->correo;
+        $applicant->ciudad = $request->city;
+        $applicant->pretensiones = $request->pretensions;
+        $applicant->perfil = $request->profile;
+        $applicant->especialidad = $request->specialty;
+        $applicant->estatus_candidatos = $request->applicant_status;
+        $applicant->fechaalta = Carbon::now();
+        $applicant->fechamod = Carbon::now();
+        $applicant->estatus = 1;
 
-                event(new NotificationEvent("1",$request->franchise));
+        if($request->hasFile('profile_photo')){
+            $photoName = time() . '_'. uniqid() . '.' . $request->profile_photo->extension();
+            $applicant->foto_perfil = $photoName;
+        }
+        
+        if($applicant->save()){
+            $lastInsertedId = DB::getPdo()->lastInsertId();
+            //adding profile photo to the applicant if exist
+            if($request->hasFile('profile_photo')){
+                $directory = storage_path('app/public/candidatos/' . $lastInsertedId);
 
-                event(new NotificationFranchiseEvent("1",$request->franchise));*/
-                
-                //$men = $this->sendWelcome($request->name, $request->email, $password);
-                return "1";
+                if(!file_exists($directory)) { 
+                    mkdir($directory);
+                }
+
+                $file = $request->file('profile_photo');
+                $file->move(storage_path('app/public/candidatos/'.$lastInsertedId),$photoName);
             }
-            else{
-                return "0";
-            }
-        /*}
+        
+            //echo $request->name.' - '.$request->email.' - '.$request->password;
+            /*$notification = new Notification();
+            $notification->catalogue_notifications_id = 1;
+            $notification->date = date('Y-m-d H:i:s');
+            $notification->users_id = DB::getPdo()->lastInsertId();
+            $notification->save();
+
+            event(new NotificationEvent("1",$request->franchise));
+
+            event(new NotificationFranchiseEvent("1",$request->franchise));*/
+            
+            //$men = $this->sendWelcome($request->name, $request->email, $password);
+            return "1";
+        }
         else{
-            return 2;
-        }*/
+            return "0";
+        }
             
     }
 
@@ -295,7 +309,11 @@ class ApplicantController extends Controller
         else{
             $applicant->reclutador = 0;
         }
-        
+
+        if($applicant->foto_perfil != '')
+            $applicant->route_image = asset('storage/candidatos/'.$id."/".$applicant->foto_perfil);
+        else
+            $applicant->route_image = asset('storage/candidatos/no_image.jpg');
 
         return response()->json(
             $applicant
@@ -358,6 +376,23 @@ class ApplicantController extends Controller
             $applicant->estatus_candidatos = $request->applicant_status;
             $applicant->fechamod = Carbon::now();
 
+            if($request->hasFile('profile_photo')){
+                $photoName = time() . '_'. uniqid() . '.' . $request->profile_photo->extension();
+                $directory = storage_path('app/public/candidatos/'.$id);
+
+                if($applicant->foto_perfil != '')
+                    unlink($directory."/".$applicant->foto_perfil);
+                
+                $applicant->foto_perfil = $photoName;
+
+                if(!file_exists($directory)) { 
+                    mkdir($directory);
+                }
+
+                $file = $request->file('profile_photo');
+                $file->move(storage_path('app/public/candidatos/'.$id),$photoName);
+            }
+
             if($applicant->update()){
                 return "1";
             }
@@ -402,6 +437,95 @@ class ApplicantController extends Controller
             Log::error($e);
             echo "0";
         }
+    }
+
+    public function addfile(Request $request)
+    {    
+        $nameFile = $request->file_app->getClientOriginalName();
+        $id = $request->idAplicante;
+        $files = CandidatoDocumentacion::where("candidato_id","=",$id)
+        ->where("documento","=",$nameFile)->get();
+        $exist = count($files);
+
+        $directory = storage_path('app/public/candidatos/'.$id);
+
+        if(!file_exists($directory)) { 
+            mkdir($directory);
+        }
+
+        $file = $request->file('file_app');
+        $file->move(storage_path('app/public/candidatos/'.$id),$nameFile);
+
+        if($exist == 0){
+
+            $candidatodocumentacion = new CandidatoDocumentacion();
+            $candidatodocumentacion->candidato_id = $id;
+            $candidatodocumentacion->documento = $nameFile;
+
+            if($candidatodocumentacion->save()){
+                return "1";
+            }
+            else{
+                return "0";
+            }
+        }
+        else{
+            $candidatodocumentacion = CandidatoDocumentacion::findOrFail($files[0]->id);
+            $candidatodocumentacion->documento = $nameFile;
+
+            if($candidatodocumentacion->update()){
+                return "2";
+            }
+            else{
+                return "0";
+            }
+        }
+        
+    }
+
+    public function getfiles(Request $request, $id)
+    {    
+        $files = CandidatoDocumentacion::where("candidato_id","=",$id)->get();
+        $exist = count($files);
+
+        if($exist == 0){
+
+            return response()->json([
+                "info" => "<div class='text-center mt-4'><div class='row' style='display:block;'>No hay documentos.</div></div>"
+            ]);
+        }
+        else{
+            $archivos = "<div class='text-center mt-3'>";
+            foreach($files as $f){
+                $archivos .= "<div class='row' style='display:block;'>";
+                $archivos .= "<a href='".asset('storage/candidatos/'.$id.'/'.$f->documento)."' download>";
+                $archivos .= $f->documento;
+                $archivos .= "</a> <span class='delete_file' id='".$f->id."' style='font-weight:600; color: red;cursor: pointer;'>X</span>";
+                $archivos .= "</div>";
+            }
+            $archivos .= "</div>";
+
+            return response()->json([
+                "info" => $archivos
+            ]);
+        }
+        
+    }
+
+    public function deletefiles($id)
+    { 
+        $files = CandidatoDocumentacion::findOrFail($id);
+        if($files->delete()){
+    
+            $file = storage_path('app/public/candidatos/'.$files->candidato_id.'/'.$files->documento);
+            unlink($file);
+            
+            return '1';
+        }
+        else{
+            return '0';
+        }
+        
     }
 
     public function addExperience(Request $request)

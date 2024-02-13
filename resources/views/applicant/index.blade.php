@@ -63,7 +63,7 @@
 <!-- Agregar Modal -->
 <div class="modal fade" id="agregarCandidatoModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl">
-    <form action="#" method="POST" id="agregarCandidato">
+    <form action="#" method="POST" id="agregarCandidato" enctype="multipart/form-data">
     <div class="modal-content">
       <div class="modal-header">
         <h4 class="modal-title" id="exampleModalLabel">Candidato</h5>
@@ -162,6 +162,11 @@
           <div class="invalid-feedback" id="invalid-estatus_candidatos-required">El estatus es requerido</div>
         </div>
       </div>
+      <div class="col-md-6">
+          <label for="name">Foto:</label>
+          <input type="file" id="profile_photo" name="profile_photo" class="form-control" accept="image/png, image/gif, image/jpeg, image/jpg, image/jiff, image/svg+xml"/>
+      </div>
+      
 
           <div class="row">
             <div class="col-lg-12 invalid-feedback showErrors"><br>
@@ -194,7 +199,7 @@
 <!-- Editar Modal -->
 <div class="modal fade" id="modificarCandidatoModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-xl">
-    <form action="#" method="POST" id="modificarCandidatoForm">
+    <form action="#" method="POST" id="modificarCandidatoForm" enctype="multipart/form-data">
     <div class="modal-content">
       <div class="modal-header">
         <h4 class="modal-title" id="exampleModalLabel">Editar Candidato</h5>
@@ -304,6 +309,37 @@
                           <div class="invalid-feedback" id="invalid-estatus_candidatosEdit-required">El estatus es requerido</div>
                         </div>
                       </div>
+                      <div class="col-md-6">
+                        <label for="name">Foto:</label>
+                        <input type="file" id="profile_photo_edit" name="profile_photo_edit" class="form-control" accept="image/png, image/gif, image/jpeg, image/jpg, image/jiff, image/svg+xml"/>
+                      </div>
+                      <div class="col-md-6" id="applicant_files">
+                        <div class="row">
+                          <div class="col-md-8">
+                            <label for="name">Documentación:</label>
+                            <input type="file" id="file_app" name="file_app" class="form-control" />
+                            <div class="invalid-feedback" id="invalid-file_app-required">El archivo es requerido</div>
+                          </div>
+                          <div class="col-md-4">
+                            <button class="btn btn-success" id="add-file" type="button" style="margin-top:20px;">Agregar</button>
+                          </div>
+                        </div>
+                      </div>
+                        <div class="row mt-2 text-center">
+                          <div class="col-md-6" id="img_profile_photo">
+                          </div>
+                          <div class="col-md-6">
+                            <div class="row">
+                              <div class="col-md-12">
+                                <label for="name"><b>Documentación:</b></label>
+                              </div>
+                            </div>
+                            <div class="row">
+                              <div class="col-md-12" id="applicant_files_list">
+                              </div>
+                            </div>
+                          </div>
+                        </div>
 
                           <div class="row">
                             <div class="col-lg-12 invalid-feedback showErrorsEdit"><br>
@@ -1135,21 +1171,26 @@
         $("#cancelarCandidato").attr("disabled",true);
         $("#loadingS").css("visibility","visible");
 
+        let formData = new FormData();
+        formData.append('names', names);
+        formData.append('lastnames', lastnames);
+        formData.append('age', age);
+        formData.append('phone', phone);
+        formData.append('correo', email);
+        formData.append('city', city);
+        formData.append('pretensions', pretensions);
+        formData.append('profile', profile);
+        formData.append('specialty', specialty);
+        formData.append('applicant_status', applicant_status);
+        formData.append('profile_photo', $('#profile_photo')[0].files[0]);
+        formData.append('_token', "{{ csrf_token() }}");
 
             $.ajax({
                 type: "POST",
-                data: { names: names, 
-                        lastnames : lastnames,
-                        age: age,
-                        phone : phone,
-                        correo: email,
-                        city: city, 
-                        pretensions : pretensions,
-                        profile: profile,
-                        specialty: specialty,
-                        applicant_status: applicant_status,
-                        "_token": "{{ csrf_token() }}" },
-                dataType: 'JSON',
+                data: formData,
+                cache:false,
+                contentType: false,
+                processData: false,
                 url: "/applicantactions",
                 success: function(msg){ 
                 //console.log(msg);
@@ -1207,7 +1248,6 @@
                 }
             }); 
     });
-
 
     let erroresEdit = 0;
     $("#modificarCandidato").click(function(){
@@ -1335,21 +1375,29 @@
       $("#cancelarCandidatoEdit").attr("disabled",true);
       $("#loadingSEdit").css("visibility","visible");
 
+      let formData = new FormData();
+      formData.append('names', names);
+      formData.append('lastnames', lastnames);
+      formData.append('age', age);
+      formData.append('phone', phone);
+      formData.append('correo', email);
+      formData.append('city', city);
+      formData.append('pretensions', pretensions);
+      formData.append('profile', profile);
+      formData.append('specialty', specialty);
+      formData.append('applicant_status', applicant_status);
+      if( $('#profile_photo_edit').val() != ''){
+        formData.append('profile_photo', $('#profile_photo_edit')[0].files[0]);
+      }
+      formData.append("_token", "{{ csrf_token() }}");
+
           $.ajax({
-              type: "PUT",
-              data: { names: names, 
-                      lastnames : lastnames,
-                      age: age,
-                      phone : phone,
-                      correo: email,
-                      city: city, 
-                      pretensions : pretensions,
-                      profile: profile,
-                      specialty: specialty,
-                      applicant_status: applicant_status,
-                      "_token": "{{ csrf_token() }}" },
-              dataType: 'JSON',
-              url: "/applicantactions/" + idAplicante,
+              type: "POST",
+              data: formData,
+              cache:false,
+              contentType:  false,
+              processData: false,
+              url: "/applicantedit/" + idAplicante,
               success: function(msg){ 
                 if(msg == '1'){
 
@@ -1452,6 +1500,8 @@
               $("#generarProcesoNuevo").css('display','none'); 
               $("#generarAcademicoNuevo").css('display','none');
 
+              $("#img_profile_photo").html("<img src='" + msg.route_image +"' class='rounded' style='height:150px; width:auto;' />");
+
               if(msg.estatus_op == 0 || msg.estatus_op == 5){
                 $("#proceso-tab").css("visibility","hidden");
               }
@@ -1464,7 +1514,7 @@
                 }
                 
               }
-            
+              getFiles(id);
               
               $("#modificarCandidatoModal").modal("show");
               
@@ -1472,6 +1522,115 @@
         }); 
       
     });
+
+    $("#add-file").click(function(){
+      
+      let file_app = $("#file_app").val().trim();
+
+      if(file_app == '' || file_app == null){
+          $("#invalid-file_app-required").addClass("showFeedback");
+          return;
+      }
+      else{
+          $("#invalid-file_app-required").removeClass("showFeedback");
+      }
+
+      $("#add-file").attr("disabled",true);
+      $("#loadingSEdit").css("visibility","visible");
+
+      let idAplicante = $("#idAplicanteEdit").val().trim();
+      let name_file = $("#file_app").val().trim();
+      let formData = new FormData();
+      formData.append('idAplicante', idAplicante);
+      formData.append('file_app', $('#file_app')[0].files[0]);
+      formData.append("_token", "{{ csrf_token() }}");
+
+          $.ajax({
+              type: "POST",
+              data: formData,
+              cache:false,
+              contentType:  false,
+              processData: false,
+              url: "/applicantaddfile",
+              success: function(msg){ 
+                if(msg == '1' || msg == '2'){
+
+                  let message = 'Documento agregado';
+                  if( msg == '2') message = 'Documento modificado';
+
+                  Lobibox.notify("success", {
+                    size: "mini",
+                    rounded: true,
+                    delay: 3000,
+                    delayIndicator: false,
+                    position: "center top",
+                    msg: message,
+                  });
+
+                  if( msg == '1'){
+                    getFiles(idAplicante);
+                  }
+
+                  $("#add-file").attr("disabled",false);
+                  $("#loadingSEdit").css("visibility","hidden");
+                  $("#file_app").val("");
+
+                }
+                if(msg == '0'){
+                  Swal.fire({
+                      icon: 'warning',
+                      html:
+                        '<b>¡Error inesperado!</b><br> ' +
+                        'Ha ocurrido un error inesperado, favor de contactar a Soporte Técnico',
+                      showCloseButton: true,
+                      showCancelButton: false,
+                      focusConfirm: false,
+                      showConfirmButton: false
+                  });
+                }
+
+                $("#add-file").attr("disabled",false);
+                $("#loadingSEdit").css("visibility","hidden");
+              },
+              error: function (err) {
+                  //console.log(err);
+                  let mensaje = '';
+                  let contenido;
+                  $.each(err.responseJSON.errors, function (key, value) {
+                      
+                      contenido = replaceContenido(value[0]);
+                      mensaje = mensaje + contenido + "<br>";
+                      /*$("#" + key).next().html(value[0]);
+                      $("#" + key).next().removeClass('d-none');*/
+                  });
+                  mensaje = mensaje + '<button type="button" class="close without-btn" data-dismiss="alert" aria-label="Close" id="cerrarAlertaEditar">' +
+                  '<span aria-hidden="true">&times;</span>' +
+                  '</button>';
+                  $("#erroresAgregarEditar").html(mensaje);
+                  $("#erroresAgregarEditar").css("display","flex");
+
+                  $("#add-file").attr("disabled",false);
+                  $("#loadingSEdit").css("visibility","hidden");
+              }
+          }); 
+
+    });
+
+    function getFiles(idApplicant){
+      
+      $.ajax({
+            type: "GET",
+            dataType: 'JSON',
+            data: { "_token": "{{ csrf_token() }}" },
+            url: "/getfilesbyapplicant/" + idApplicant,
+            success: function(msg){ 
+              //console.log(msg);
+              
+              $("#applicant_files_list").html(msg.info);
+              
+            }
+        }); 
+    }
 
     $(document).on("click", ".desactivar, .activar", function(){
         let check = this.id;
@@ -1560,6 +1719,60 @@
                   $("#switch_" + id).prop("checked",false);
                 }
             }
+        }
+        })
+        
+  });
+
+  $(document).on("click", ".delete_file", function(){
+        let id = this.id;
+        let idAplicante = $("#idAplicanteEdit").val().trim();
+
+        Swal.fire({
+        title: '¿Quieres eliminar este documento?',
+        showCancelButton: true,
+        cancelButtonText: 'Cancelar',
+        confirmButtonText: 'Aceptar',
+        reverseButtons : true,
+        allowOutsideClick: false,
+        }).then((result) => {
+        /* Read more about isConfirmed, isDenied below */
+        if (result.isConfirmed) {
+
+            $.ajax({
+                type: "DELETE",
+                dataType: 'JSON',
+                data: { "_token": "{{ csrf_token() }}" },
+                url: "/deletefile/" + id,
+                success: function(msg){ 
+                if(msg == '1'){
+                    Lobibox.notify("success", {
+                        size: "mini",
+                        rounded: true,
+                        delay: 3000,
+                        delayIndicator: false,
+                        position: "center top",
+                        msg: "Documento eliminado",
+                    });
+                    getFiles(idAplicante);
+                }
+                if(msg == '0'){
+                  Swal.fire({
+                    icon: 'warning',
+                    html:
+                      '<b>¡Error inesperado!</b><br> ' +
+                      'Ha ocurrido un error inesperado, favor de contactar a Soporte Técnico',
+                    showCloseButton: true,
+                    showCancelButton: false,
+                    focusConfirm: false,
+                    showConfirmButton: false
+                  });
+                }
+                }
+            });
+
+        } else if (result.isDismissed) {
+            
         }
         })
         

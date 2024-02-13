@@ -28,5 +28,6 @@ class Applicant extends Model
         'experiencia',
         'fechaalta',
         'fechamod',
+        'foto_perfil'
     ];
 }

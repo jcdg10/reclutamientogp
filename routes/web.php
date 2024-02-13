@@ -53,11 +53,14 @@ Route::group(['middleware' => ['auth']], function() {
 
     /*APPLICANT*/
     Route::resource('applicantactions', ApplicantController::class);
-    Route::put('/applicantedit',[ApplicantController::class,'update'])->name('update');
+    Route::post('/applicantedit/{id}',[ApplicantController::class,'update']);
     Route::get('candidatos',[ApplicantController::class,'showApplicant'])->name('showApplicant');
-    Route::get('applicant.index',[ApplicantController::class,'index'])->name('index');
+    Route::get('applicant.index',[ApplicantController::class,'index']);
     Route::post('/processapplicantdataget',[ApplicantController::class,'processapplicantdataget'])->name('processapplicantdataget');
     Route::get('/addcandidatovacante',[ApplicantController::class,'addCandidatoVacante'])->name('addCandidatoVacante');
+    Route::post('/applicantaddfile',[ApplicantController::class,'addfile'])->name('addfile');
+    Route::get('/getfilesbyapplicant/{id}',[ApplicantController::class,'getfiles']);
+    Route::delete('/deletefile/{id}',[ApplicantController::class,'deletefiles']);
 
     Route::post('/applicantacademico',  [ApplicantController::class,'addAcademico']);
     Route::post('applicant.getApplicantAcademic',  [ApplicantController::class,'getAcademic']);
@@ -74,48 +77,48 @@ Route::group(['middleware' => ['auth']], function() {
 
     /*CLIENTS*/
     Route::resource('clientactions', ClientController::class);
-    Route::put('/clientedit',[ClientController::class,'update'])->name('update');
+    Route::put('/clientedit',[ClientController::class,'update']);
     Route::get('clientes',[ClientController::class,'showClient'])->name('showClient');
-    Route::get('client.index',[ClientController::class,'index'])->name('index');
+    Route::get('client.index',[ClientController::class,'index']);
 
     /*RECRUITER*/
     Route::resource('recruiteractions', RecruiterController::class);
-    Route::put('/recruiteredit',[RecruiterController::class,'update'])->name('update');
+    Route::put('/recruiteredit',[RecruiterController::class,'update']);
     Route::get('reclutador',[RecruiterController::class,'showRecruiter'])->name('showRecruiter');
-    Route::get('recruiter.index',[RecruiterController::class,'index'])->name('index');
+    Route::get('recruiter.index',[RecruiterController::class,'index']);
 
     /*CITY*/
     Route::resource('cityactions', CiudadController::class);
-    Route::put('/cityedit',[CiudadController::class,'update'])->name('update');
+    Route::put('/cityedit',[CiudadController::class,'update']);
     Route::get('ciudad',[CiudadController::class,'showCiudad'])->name('showCiudad');
-    Route::get('city.index',[CiudadController::class,'index'])->name('index');
+    Route::get('city.index',[CiudadController::class,'index']);
 
     /*SPECIALITY*/
     Route::resource('specialtyactions', EspecialidadController::class);
-    Route::put('/specialtyedit',[EspecialidadController::class,'update'])->name('update');
+    Route::put('/specialtyedit',[EspecialidadController::class,'update']);
     Route::get('especialidad',[EspecialidadController::class,'showEspecialidad'])->name('showEspecialidad');
-    Route::get('specialty.index',[EspecialidadController::class,'index'])->name('index');
+    Route::get('specialty.index',[EspecialidadController::class,'index']);
 
     /*SERVICIOS REQUERIDOS*/
     Route::resource('requiredserviceactions', ServicioRequeridoController::class);
-    Route::put('/requiredserviceedit',[ServicioRequeridoController::class,'update'])->name('update');
+    Route::put('/requiredserviceedit',[ServicioRequeridoController::class,'update']);
     Route::get('serviciorequerido',[ServicioRequeridoController::class,'showServicioRequerido'])->name('showServicioRequerido');
-    Route::get('requiredservice.index',[ServicioRequeridoController::class,'index'])->name('index');
+    Route::get('requiredservice.index',[ServicioRequeridoController::class,'index']);
 
     /*REPORT*/
     Route::resource('reportactions', ReportController::class);
-    Route::put('/reportedit',[ReportController::class,'update'])->name('update');
+    Route::put('/reportedit',[ReportController::class,'update']);
     Route::get('reporte',[ReportController::class,'showReport'])->name('showReport');
-    Route::get('report.index',[ReportController::class,'index'])->name('index');
+    Route::get('report.index',[ReportController::class,'index']);
     Route::get('/reportedownload/{id}',[ReportController::class,'download'])->name('download');
     Route::post('searchreport',[ReportController::class,'searchReport'])->name('searchReport');
     Route::post('searchdatachart',[ReportController::class,'searchDataChart'])->name('searchDataChart');
 
     /*VACANT REQUERIMIENTO*/
     Route::resource('requestactions', RequestController::class);
-    Route::put('/requestedit',[RequestController::class,'update'])->name('update');
+    Route::put('/requestedit',[RequestController::class,'update']);
     Route::get('requerimiento',[RequestController::class,'showRequest'])->name('showRequest');
-    Route::get('requerimiento.index',[RequestController::class,'index'])->name('index');
+    Route::get('requerimiento.index',[RequestController::class,'index']);
     Route::get('/getinfoclient/{id}',[RequestController::class,'getInfoClient'])->name('getInfoClient');
 
     //GENERAL DATA
@@ -184,9 +187,9 @@ Route::group(['middleware' => ['auth']], function() {
     Route::resource('roleactions', RoleController::class);
     Route::post('/getPermisosModulo/{id}',[RoleController::class,'getPermisosModulo'])->name('getPermisosModulo');
     Route::post('/modifypermissions',[RoleController::class,'modifyPermissions'])->name('modifyPermissions');
-    Route::put('/roleedit',[RoleController::class,'update'])->name('update');
+    Route::put('/roleedit',[RoleController::class,'update']);
     Route::get('perfiles',[RoleController::class,'showRole'])->name('showRole');
-    Route::get('role.index',[RoleController::class,'index'])->name('index');
+    Route::get('role.index',[RoleController::class,'index']);
 });
 
 Route::get('/logout', 'App\Http\Controllers\LogoutController@perform')->name('logout.perform');
