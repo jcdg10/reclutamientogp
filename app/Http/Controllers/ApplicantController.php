@@ -9,6 +9,7 @@ use App\Models\Academic;
 use App\Models\Applicant;
 use App\Models\Experience;
 use Illuminate\Http\Request;
+use App\Models\CandidatoPerfil;
 use App\Models\CandidatosProgreso;
 use App\Models\CandidatoDocumentacion;
 use App\Models\Requirement\GeneralData;
@@ -21,25 +22,31 @@ class ApplicantController extends Controller
     {
 
         $applicants = DB::table('candidatos as c')
-        ->selectRaw('c.idcandidato as id, c.nombres, c.apellidos, c.edad, c.perfil, 
+        ->selectRaw('c.idcandidato as id, c.nombres, c.apellidos, c.edad, 
         FORMAT(c.pretensiones,2) as pretensiones, c.estatus, ec.estatus as estatus_candidatos_r, 
-        ec.color, v.cliente_id, dg.puesto as vacante_proceso, dg2.puesto as vacante_ocupada')
+        ec.color, v.cliente_id,
+        group_concat(DISTINCT CONCAT(per.perfil) 
+        ORDER BY per.perfil
+        SEPARATOR ", ") as perfil,
+        group_concat(DISTINCT CONCAT(dg.puesto) 
+        ORDER BY dg.puesto
+        SEPARATOR ", ") as vacante_proceso')
         ->join('estatus_candidatos as ec','ec.id', '=','c.estatus_candidatos')
+        ->leftJoin('candidatos_perfiles as cper','c.idcandidato', '=','cper.candidato_id')
+        ->leftJoin('perfil as per','cper.perfil_id', '=','per.id')
         ->leftJoin('candidatos_proceso as cp', function($join)
         {
             $join->on('cp.candidatos_id', '=','c.idcandidato');
             $join->on('cp.estatus','=',DB::raw(2));
         })
-        ->leftJoin('candidatos_proceso as cp_c', function($join)
-        {
-            $join->on('cp_c.candidatos_id', '=','c.idcandidato');
-            $join->on('cp_c.estatus','=',DB::raw(0));
-        })
         ->leftJoin('vacantes as v','cp.vacantes_id', '=','v.id')
         ->leftJoin('datosgenerales as dg','cp.vacantes_id', '=','dg.vacantes_id')
-        ->leftJoin('datosgenerales as dg2','cp_c.vacantes_id', '=','dg2.vacantes_id')
         ->orderBy("c.idcandidato","DESC")
-        ->get();
+        ->groupBy(
+        'c.idcandidato','c.nombres','c.apellidos','c.edad',
+        'c.pretensiones', 'c.estatus', 'ec.estatus', 
+        'ec.color', 'v.cliente_id')
+        ->get();       
         
         $roles = DB::table('permisos')
         ->where('rol_id','=', auth()->user()->roles_id)
@@ -75,7 +82,10 @@ class ApplicantController extends Controller
         ->addColumn('requirement', function($applicants){
 
             $requirement = 'Sin asignación';
-            if($applicants->vacante_ocupada != '' && $applicants->vacante_ocupada != null){
+            if($applicants->vacante_proceso != '' && $applicants->vacante_proceso != null){
+                $requirement = $applicants->vacante_proceso;
+            }
+            /*if($applicants->vacante_ocupada != '' && $applicants->vacante_ocupada != null){
                 if($applicants->cliente_id == null || $applicants->cliente_id == '' ){
                     $requirement = 'Sin asignación';
                 }
@@ -98,7 +108,7 @@ class ApplicantController extends Controller
                 if($applicants->vacante_proceso != null || $applicants->vacante_proceso != ''){
                     $requirement = $applicants->vacante_proceso;
                 }
-            }
+            }*/
 
             
         
@@ -143,6 +153,7 @@ class ApplicantController extends Controller
         $escolaridad = DB::table('escolaridad')->get();
         $ciudades = DB::table('city')->get();
         $especialidades = DB::table('especialidad')->get();
+        $perfiles = DB::table('perfil')->where("estatus","=",1)->orderBy('perfil', 'ASC')->get();
         $estatus_candidatos = DB::table('estatus_candidatos')->get();
 
         $roles = DB::table('permisos')
@@ -159,6 +170,7 @@ class ApplicantController extends Controller
             return view('applicant.index')->with(['roles'=>$roles,
                                                 'escolaridad'=>$escolaridad, 'ciudades'=>$ciudades, 
                                                 'especialidades'=>$especialidades,
+                                                'perfiles'=>$perfiles,
                                                 'estatus_candidatos'=>$estatus_candidatos]);
         }
         else{
@@ -194,16 +206,12 @@ class ApplicantController extends Controller
                         'max:45'
                         ],
             'pretensions' => ['required'],
-            'profile' => ['required',
-                        'string',
-                        'max:45'
-                        ],
             'specialty' => ['required'
                         ],
             'applicant_status' => ['required'
                         ],
         ]);
-        
+
         $applicant = new Applicant();
         $applicant->nombres = $request->names;
         $applicant->apellidos = $request->lastnames;
@@ -212,7 +220,6 @@ class ApplicantController extends Controller
         $applicant->correo = $request->correo;
         $applicant->ciudad = $request->city;
         $applicant->pretensiones = $request->pretensions;
-        $applicant->perfil = $request->profile;
         $applicant->especialidad = $request->specialty;
         $applicant->estatus_candidatos = $request->applicant_status;
         $applicant->fechaalta = Carbon::now();
@@ -236,6 +243,14 @@ class ApplicantController extends Controller
 
                 $file = $request->file('profile_photo');
                 $file->move(storage_path('app/public/candidatos/'.$lastInsertedId),$photoName);
+            }
+
+            $array_profiles = explode(",",$request->array_profiles);
+            foreach($array_profiles as $profiles){
+                $candidatoPerfil = new CandidatoPerfil(); 
+                $candidatoPerfil->perfil_id = $profiles;
+                $candidatoPerfil->candidato_id = $lastInsertedId;
+                $candidatoPerfil->save();           
             }
         
             //echo $request->name.' - '.$request->email.' - '.$request->password;
@@ -315,6 +330,12 @@ class ApplicantController extends Controller
         else
             $applicant->route_image = asset('storage/candidatos/no_image.jpg');
 
+        $data_perfiles = $this->getPerfiles($id);
+        $info_perfiles = $data_perfiles[0];
+        $ids_perfiles = $data_perfiles[1];
+        $applicant->info_perfiles = $info_perfiles;
+        $applicant->ids_perfiles = $ids_perfiles;
+
         return response()->json(
             $applicant
         );
@@ -353,10 +374,6 @@ class ApplicantController extends Controller
                 'city' => ['required'
                             ],
                 'pretensions' => ['required'],
-                'profile' => ['required',
-                            'string',
-                            'max:45'
-                            ],
                 'specialty' => ['required'
                             ],
                 'applicant_status' => ['required'
@@ -371,7 +388,6 @@ class ApplicantController extends Controller
             $applicant->correo = $request->correo;
             $applicant->ciudad = $request->city;
             $applicant->pretensiones = $request->pretensions;
-            $applicant->perfil = $request->profile;
             $applicant->especialidad = $request->specialty;
             $applicant->estatus_candidatos = $request->applicant_status;
             $applicant->fechamod = Carbon::now();
@@ -872,13 +888,66 @@ class ApplicantController extends Controller
         }
     }
 
+    public function processapplicantdatagetall(Request $request)
+    {   
+        //0  contratado
+        //1  descartado
+        //2  en proceso
+        $info = DB::table('candidatos_proceso as cp')
+        ->selectRaw('cp.id, dg.puesto, ec.estatus, ec.color')
+            ->join("datosgenerales as dg","cp.vacantes_id","=","dg.vacantes_id")
+            ->join("estatus_proceso as ec","ec.id","=","cp.estatus")
+            ->where("cp.candidatos_id","=",$request->id)
+            ->orderBy("cp.id","DESC")
+            ->get();
+
+        if(isset($info[0]->id)){
+
+            //print_r($info);
+            $table_info = "<table class='procesoTable ms-4'>
+            <tr style='font-weight:600;'>
+            <td>Requerimiento</td>
+            <td>Estatus</td>
+            <td>Acciones</td>
+            </tr>";
+            foreach($info as $in){
+                $table_info .= "<tr>";
+
+                $table_info .= "<td>".$in->puesto."</td>";
+                $table_info .= "<td><span class='badge bg-".$in->color."-4 hp-bg-dark-".$in->color." text-".$in->color." border-".$in->color."' >".$in->estatus."</span></td>";
+                $table_info .= '<td><img src="'.url('img/eye.svg').'" class="ver_proceso imgEdit toggle" id="'.$in->id.'" data-toggle="tooltip" data-placement="top" title="" style="margin-right:9px;" data-bs-original-title="Ver" aria-label="Ver"></td>';
+                $table_info .= "</tr>";
+            }
+
+            $table_info .= "</table>";
+
+            $processData = new ProcesoData();
+            $processData->estatus_op = 1;
+            $processData->table_info = $table_info;
+
+        }
+        else{
+            $processData = new ProcesoData();
+            $processData->estatus_op = -1;
+            $processData->estatus_candidato_vacante = 0;
+            $processData->reclutador = "";
+        }
+
+        
+
+        return response()->json(
+            $processData
+        );
+        
+    }
+
     public function processapplicantdataget(Request $request)
     {   
         //0  contratado
         //1  descartado
         //2  en proceso
         $info = DB::table('candidatos_proceso')
-            ->where("candidatos_id","=",$request->id)
+            ->where("id","=",$request->id)
             //->where("estatus","=",2)
             ->orderBy("id","DESC")
             ->get();
@@ -906,12 +975,15 @@ class ApplicantController extends Controller
                 ->get();
 
                 $info_candidatos_vacante = DB::table('candidatos_proceso')
-                ->selectRaw('id, entrevista as entrevistaCV, pruebatecnica as pruebatecnicaCV, pruebapsicometrica as pruebapsicometricaCV, referencias as referenciasCV, entrevista_tecnica as entrevista_tecnicaCV, estudio_socioeconomico as estudio_socioeconomicoCV, estatus')
+                ->selectRaw('id, entrevista as entrevistaCV, pruebatecnica as pruebatecnicaCV, pruebapsicometrica as pruebapsicometricaCV, referencias as referenciasCV, entrevista_tecnica as entrevista_tecnicaCV, estudio_socioeconomico as estudio_socioeconomicoCV, estatus, observaciones')
                 ->where("id","=",$info[0]->id)
                 //->where("candidatos_id","=",$request->id)
                 //->where("vacantes_id","=",$info[0]->vacantes_id)
                 //->where("estatus","=",2)
                 ->get();
+
+                $info_candidato = Applicant::where("idcandidato",$info[0]->candidatos_id)->get();
+                $processData->nameCandidato = $info_candidato[0]->nombres." ".$info_candidato[0]->apellidos;
     //print_r($processData);
                 if(isset($info_candidatos_vacante[0]->id)){
                     $processData->estatus_candidato_vacante = 1;
@@ -922,6 +994,7 @@ class ApplicantController extends Controller
                     $processData->entrevista_tecnicaCV = $info_candidatos_vacante[0]->entrevista_tecnicaCV;
                     $processData->estudio_socioeconomicoCV = $info_candidatos_vacante[0]->estudio_socioeconomicoCV;
                     $processData->estatus = $info_candidatos_vacante[0]->estatus;
+                    $processData->observaciones = $info_candidatos_vacante[0]->observaciones;
                 }
                 else{
                     $processData->estatus_candidato_vacante = 0;
@@ -966,7 +1039,7 @@ class ApplicantController extends Controller
             //1  descartado
             //2  en cartera
             //3  en cartera descartado
-            if($request->estatus_candidato == 2){
+            /*if($request->estatus_candidato == 2){
                 $estatus_proceso = 2;
             }
             if($request->estatus_candidato == 3){
@@ -977,7 +1050,8 @@ class ApplicantController extends Controller
             }
             if($request->estatus_candidato == 5){
                 $estatus_proceso = 3;
-            }
+            }*/
+            $estatus_proceso = $request->estatus_candidato;
 
             if(isset($info[0]->id)){
                 $candidatos_proceso = CandidatosProgreso::findOrFail($info[0]->id);
@@ -990,10 +1064,12 @@ class ApplicantController extends Controller
                 $candidatos_proceso->entrevista_tecnica = $request->entrevista_tecnica;
                 $candidatos_proceso->estudio_socioeconomico = $request->estudio_socioeconomico;
                 $candidatos_proceso->estatus = $estatus_proceso;
+                $candidatos_proceso->observaciones = $request->observaciones;
 
+                /*
                 $applicant = Applicant::findOrFail($request->candidato_id);
                 $applicant->estatus_candidatos = $request->estatus_candidato;
-                $applicant->update();
+                $applicant->update();*/
                 
                 if($candidatos_proceso->update()){
                     return "1";
@@ -1013,12 +1089,13 @@ class ApplicantController extends Controller
                 $candidatos_proceso->entrevista_tecnica = $request->entrevista_tecnica;
                 $candidatos_proceso->estudio_socioeconomico = $request->estudio_socioeconomico;
                 $candidatos_proceso->estatus = $request->estatus_candidato;
+                $candidatos_proceso->observaciones = $request->observaciones;
 
                 if($request->estatus_candidato == 1)
                 {
-                    $applicant = Applicant::findOrFail($request->candidato_id);
+                   /* $applicant = Applicant::findOrFail($request->candidato_id);
                     $applicant->estatus_candidatos = 3;
-                    $applicant->update();
+                    $applicant->update();*/
                 }
                 
                 if($candidatos_proceso->save()){
@@ -1029,5 +1106,71 @@ class ApplicantController extends Controller
                 }
             }
 
+    }
+
+    public function getPerfiles($id){
+        $candidatosperfiles = DB::table('candidatos_perfiles as cp')
+        ->selectRaw('cp.id, p.perfil')
+        ->join('perfil as p','p.id', '=','cp.perfil_id')
+        ->where("cp.candidato_id","=",$id)
+        ->orderBy("p.perfil","ASC")
+        ->get();
+        
+        $info_perfiles = "";
+        foreach($candidatosperfiles as $cp){
+            $ids_perfiles[] = $cp->id;
+            $info_perfiles .= "<div class='row' style='display:block;' id='editprof_" . $cp->id . "' >".
+            $cp->perfil
+            ."<span class='delete_profile_edit' id='" . $cp->id . "' style='font-weight:600; color: red;cursor: pointer;'>X</span>
+            </div>";
+        }
+        return array($info_perfiles, $ids_perfiles);
+    }
+
+    public function addPerfil(Request $request){
+
+        $validated = $request->validate([
+            'perfil_id' => ['required'],
+            'candidato_id' => ['required']
+        ]);
+
+        $existe = CandidatoPerfil::where("perfil_id","=",$request->perfil_id)
+        ->where("candidato_id","=",$request->candidato_id)->get();
+
+        if(count($existe) > 0){
+            return -1;
+        }
+
+        $candidatoPerfil = new CandidatoPerfil(); 
+        $candidatoPerfil->perfil_id = $request->perfil_id;
+        $candidatoPerfil->candidato_id = $request->candidato_id;
+        $candidatoPerfil->save();  
+        
+        $id_perfil = DB::getPdo()->lastInsertId();
+        return $id_perfil;
+    }
+
+    public function deletePerfil($id)
+    {
+        try{
+            $candidatoPerfil = CandidatoPerfil::findOrFail($id);
+
+            $perfiles = CandidatoPerfil::where("candidato_id","=",$candidatoPerfil->candidato_id)->get();
+
+            if(count($perfiles) == 1){
+                return -1;
+            }
+
+            if($candidatoPerfil->delete()){
+                echo "1";
+            }
+            else{
+                echo "0";            
+            }
+        }
+        catch(Exception $e){
+            Log::error($e);
+            echo "0";
+        }
     }
 }

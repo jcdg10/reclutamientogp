@@ -35,21 +35,23 @@ class RequestController extends Controller
     {
         if(auth()->user()->roles_id != 3){
             $requerimientos = DB::table('vacantes as v')
-            ->selectRaw('v.id, c.nombres as nombre_cliente, v.estatus, v.estatus_vacante as estatus_vacante_in, ev.estatus as estatus_vacante_or, ev.color, DATE_FORMAT(v.fechaalta, "%Y-%m-%d") as fechaalta, DATE_FORMAT(v.fechaalta, "%d-%m-%Y") as fecha, v.fecha_vacante_cubierta, dg.puesto, v.reclutador_id, u.name as namereclutador')
+            ->selectRaw('v.id, c.nombres as nombre_cliente, v.estatus, v.estatus_vacante as estatus_vacante_in, ev.estatus as estatus_vacante_or, ev.color, DATE_FORMAT(v.fechaalta, "%Y-%m-%d") as fechaalta, DATE_FORMAT(v.fechaalta, "%d-%m-%Y") as fecha, v.fecha_vacante_cubierta, dg.puesto, v.reclutador_id, u.name as namereclutador, p.perfil')
             ->join('cliente as c','c.id', '=','v.cliente_id')
             ->leftJoin('estatus_vacantes as ev','ev.id', '=','v.estatus_vacante')
             ->leftJoin('datosgenerales as dg', 'dg.vacantes_id', '=', 'v.id')
             ->leftJoin('users as u', 'u.id', '=', 'v.reclutador_id')
+            ->leftJoin('perfil as p', 'p.id', '=', 'dg.perfil_id')
             ->orderBy("v.id","DESC")
             ->get();
         }
         else{
             $requerimientos = DB::table('vacantes as v')
-            ->selectRaw('v.id, c.nombres as nombre_cliente, v.estatus, v.estatus_vacante as estatus_vacante_in, ev.estatus as estatus_vacante_or, ev.color, DATE_FORMAT(v.fechaalta, "%Y-%m-%d") as fechaalta, DATE_FORMAT(v.fechaalta, "%d-%m-%Y") as fecha, v.fecha_vacante_cubierta, dg.puesto, v.reclutador_id, u.name as namereclutador')
+            ->selectRaw('v.id, c.nombres as nombre_cliente, v.estatus, v.estatus_vacante as estatus_vacante_in, ev.estatus as estatus_vacante_or, ev.color, DATE_FORMAT(v.fechaalta, "%Y-%m-%d") as fechaalta, DATE_FORMAT(v.fechaalta, "%d-%m-%Y") as fecha, v.fecha_vacante_cubierta, dg.puesto, v.reclutador_id, u.name as namereclutador, p.perfil')
             ->join('cliente as c','c.id', '=','v.cliente_id')
             ->leftJoin('estatus_vacantes as ev','ev.id', '=','v.estatus_vacante')
             ->leftJoin('datosgenerales as dg', 'dg.vacantes_id', '=', 'v.id')
             ->leftJoin('users as u', 'u.id', '=', 'v.reclutador_id')
+            ->leftJoin('perfil as p', 'p.id', '=', 'dg.perfil_id')
             ->where('v.reclutador_id','=',auth()->user()->id)
             ->where('v.estatus_vacante','<>',2)
             ->orderBy("v.id","DESC")
@@ -175,12 +177,14 @@ class RequestController extends Controller
         $request_service = ServicioRequerido::orderBy('servicio','ASC')->get()
         ->where('estatus','=','1');
         $modalidad = DB::table('modalidad')->get();
+        $perfiles = DB::table('perfil')->where("estatus","=",1)->orderBy('perfil', 'ASC')->get();
         
         if($roles[0]->permitido == 1){
             return view('vacant.index')->with(['clientes'=>$clients,
                                                 'estado_civiles'=>$estado_civiles,
                                                 'request_service'=>$request_service,
                                                 'modalidad'=>$modalidad,
+                                                'perfiles'=>$perfiles,
                                                 'roles'=>$roles]);
         }
         else{
@@ -515,6 +519,11 @@ class RequestController extends Controller
     public function getRecruitment(Request $request)
     {   
         $requerimiento = Requerimiento::findOrFail($request->idRequerimiento);
+        $generalData = GeneralData::where("vacantes_id","=",$request->idRequerimiento)->get();
+
+        if(count($generalData) < 1){
+            return -1;
+        }
 
         $reclutador = DB::table('users')->orderBy('name','ASC')
             ->where('roles_id','=','3')->where('status','=','1')->get();
@@ -663,13 +672,23 @@ class RequestController extends Controller
     }
 
 
-    public function addapplicant()
+    public function addapplicant(Request $request)
     {
-        $applicants = DB::table('candidatos')
-        ->selectRaw('idcandidato as id, nombres, apellidos, CONCAT(nombres," ",apellidos) as name, estatus')
-        ->where('estatus_candidatos','=',5)
-        ->orderBy('apellidos','ASC')
-        ->orderBy('nombres','ASC')
+        $idRequerimiento = $request->idRequerimiento;
+        $generalData = GeneralData::where("vacantes_id","=",$idRequerimiento)->get();
+
+        $applicants = DB::table('candidatos as c')
+        ->selectRaw('c.idcandidato as id, c.nombres, c.apellidos, CONCAT(c.nombres," ",c.apellidos) as name, c.estatus')
+        ->join("candidatos_perfiles as cp","cp.candidato_id","=","c.idcandidato")
+        ->leftJoin('candidatos_proceso as cpro', function($join) use ($idRequerimiento)
+        {
+            $join->on('cpro.candidatos_id','=','c.idcandidato');
+            $join->on('cpro.vacantes_id','=',DB::raw($idRequerimiento));
+        })
+        ->where('cp.perfil_id','=',$generalData[0]->perfil_id)
+        ->where('cpro.id','=',null)
+        ->orderBy('c.apellidos','ASC')
+        ->orderBy('c.nombres','ASC')
         ->get();
 
 
@@ -701,9 +720,9 @@ class RequestController extends Controller
     {
         $requerimiento = $request->requerimiento;
         $applicants = DB::table('candidatos as c')
-        ->selectRaw('c.idcandidato as id, cp.id as iddelete, CONCAT(c.nombres," ",c.apellidos) as name, c.estatus, c.estatus_candidatos, ec.color, ec.estatus as estatus_ec, cp.estatus as estatus_candidato')
+        ->selectRaw('c.idcandidato as id, cp.id as iddelete, CONCAT(c.nombres," ",c.apellidos) as name, c.estatus, c.estatus_candidatos, ep.color, ep.estatus as estatus_ec, ep.estatus as estatus_candidato')
         ->join('candidatos_proceso as cp','cp.candidatos_id','=','c.idcandidato')
-        ->leftJoin('estatus_candidatos as ec','ec.id','=','c.estatus_candidatos')
+        ->leftJoin("estatus_proceso as ep","ep.id","=","cp.estatus")
         ->where('cp.vacantes_id','=',$requerimiento)
         ->orderBy('c.apellidos','ASC')
         ->orderBy('c.nombres','ASC')
@@ -714,9 +733,9 @@ class RequestController extends Controller
         ->addIndexColumn()
         ->addColumn('state', function($applicants){
 
-            $color = "";
-            $estatus = "";
-            if($applicants->estatus_candidato == 0){
+            $color = $applicants->color;
+            $estatus = $applicants->estatus_candidato;
+           /* if($applicants->estatus_candidato == 0){
                 $color = "success";
                 $estatus = "Contratado";
             }
@@ -727,8 +746,8 @@ class RequestController extends Controller
             if($applicants->estatus_candidato == 2 || $applicants->estatus_candidato == 3){
                 $color = "primary";
                 $estatus = "En cartera";
-            }
-                $state = '<div class="badge bg-'.$color.'-4 hp-bg-dark-'.$color.' text-'.$color.' border-'.$color.'">'.$estatus.'</div>';
+            }*/
+                $state = '<span class="badge bg-'.$color.'-4 hp-bg-dark-'.$color.' text-'.$color.' border-'.$color.'">'.$estatus.'</span>';
         
             return $state;
         })

@@ -7,6 +7,9 @@
     .alignLeft{
       text-align: left !important;
     }
+    .datepicker table td img, .table td img {
+        height: auto !important;
+    }
   </style>
 @endpush
 
@@ -43,6 +46,7 @@
                     <th>Id</th>
                     <th>Vacante</th>
                     <th>Cliente</th>
+                    <th>Perfil</th>
                     <th>Estatus</th>
                     <th>Estatus vacante</th>
                     <th>Reclutador</th>
@@ -231,12 +235,22 @@
                       <input type="hidden" id="idGeneralUnico" name="idGeneralUnico" />
 
                       <div class="row" style="margin-top: 10px;">
-                        <div class="col-md-12">
+                        <div class="col-md-6">
                             <div class="mb-3">
                               <label for="namePosition" class="form-label">Nombre del puesto</label>
                               <input type="text" class="form-control" id="namePosition" name="namePosition" maxlength="100" required>
                               <div class="invalid-feedback" id="invalid-namePosition-required">El nombre del puesto es requerido</div>
                             </div>
+                        </div>
+                        <div class="col-md-6">
+                          <label for="profile" class="form-label">Perfil</label>
+                          <select class="form-control" id="profile" name="profile">
+                            <option value="">Selecciona un perfil</option>
+                            @foreach ($perfiles as $p)
+                              <option value="{{ $p->id }}">{{ $p->perfil }}</option>
+                            @endforeach
+                          </select>
+                          <div class="invalid-feedback" id="invalid-profile-required">El perfil es requerido</div>
                         </div>
                       </div>
                       <div class="row">
@@ -1147,13 +1161,13 @@
                     text: 'PDF',
                     title: 'Requerimientos',
                     exportOptions: {
-                            columns: [ 0,1,2,3,4]
+                            columns: [ 0,1,2,3,4,5]
                     },
                     customize: function (doc) {
                                 doc.defaultStyle.fontSize = 8; //2, 3, 4,etc
                                 doc.styles.tableHeader.fontSize = 12; //2, 3, 4, etc
-                                doc.content[1].table.widths = [ '10%', '25%', '25%', 
-                                                                '25%','15%'];
+                                doc.content[1].table.widths = [ '8%', '20%', '20%', 
+                                                                '19%','20%','13%'];
                     }
                 },
                 {
@@ -1161,7 +1175,7 @@
                     className: 'btn-dark',
                     text: 'Excel',
                     exportOptions: {
-                        columns: [ 0,1,2,3, 4]
+                        columns: [ 0,1,2,3, 4,5]
                     },
                     title: 'Requerimientos'
                 }
@@ -1171,6 +1185,7 @@
                    { data: 'id', name: 'id' },
                    { data: 'puesto', name: 'puesto' },
                    { data: 'nombre_cliente', name: 'nombre_cliente' },
+                   { data: 'perfil', name: 'perfil' },
                    { data: 'state', name: 'state' },
                    { data: 'estatus_vacante', name: 'esttatus_vacante' },
                    { data: 'namereclutador', name: 'namereclutador' },
@@ -1178,8 +1193,8 @@
                 ],
           "order": [],
           "columnDefs": [
-              { "visible": false, "targets": 3 },
-              { "orderable": false, "targets": 6 },
+              { "visible": false, "targets": 4 },
+              { "orderable": false, "targets": 7 },
           ]
        });
     });
@@ -1528,6 +1543,7 @@
   $(document).on("click", "#guardarDatosGenerales", function(){
 
         let position = $("#namePosition").val().trim();
+        let profile = $("#profile").val().trim();
         let numVacant = $("#numVacant").val().trim();
         let requestDate = $("#requestDate").val().trim();
         let requestService = $("#requestService").val().trim();
@@ -1551,6 +1567,15 @@
         }
         else{
             $("#invalid-namePosition-required").removeClass("showFeedback");
+        }
+
+        //validar profile
+        if(profile == '' || profile == 0){
+            $("#invalid-profile-required").addClass("showFeedback");
+            erroresGenerales++;
+        }
+        else{
+            $("#invalid-profile-required").removeClass("showFeedback");
         }
 
         //validar numVacant
@@ -1611,6 +1636,7 @@
             $.ajax({
                 type: "POST",
                 data: { position: position,
+                        profile: profile,
                         numVacant: numVacant,
                         requestDate: requestDate,
                         requestService: requestService,
@@ -1736,6 +1762,7 @@
   $(document).on("click", "#editarDatosGenerales", function(){
 
         let position = $("#namePosition").val().trim();
+        let profile = $("#profile").val().trim();
         let numVacant = $("#numVacant").val().trim();
         let requestDate = $("#requestDate").val().trim();
         let requestService = $("#requestService").val().trim();
@@ -1755,6 +1782,15 @@
         }
         else{
             $("#invalid-namePosition-required").removeClass("showFeedback");
+        }
+
+        //validar profile
+        if(profile == '' || profile == 0){
+            $("#invalid-profile-required").addClass("showFeedback");
+            erroresGenerales++;
+        }
+        else{
+            $("#invalid-profile-required").removeClass("showFeedback");
         }
 
         //validar numVacant
@@ -1815,6 +1851,7 @@
             $.ajax({
                 type: "POST",
                 data: { position: position,
+                        profile: profile,
                         numVacant: numVacant,
                         requestDate: requestDate,
                         requestService: requestService,
@@ -4411,6 +4448,7 @@ $(document).on("click", "#editarDatosPuesto", function(){
                           
                           $("#idGeneralUnico").val(msg.id);
                           $("#namePosition").val(msg.puesto);
+                          $("#profile").val(msg.perfil_id);
                           $("#numVacant").val(msg.novacantes);
                           $("#requestDate").val(msg.fechasolicitud);
                           $("#requestService").html(msg.require_service_select);
@@ -5272,7 +5310,14 @@ $(document).on("click", "#editarDatosPuesto", function(){
                 "previous": "Ant."
             }
           },
-          ajax: '{{ url('addapplicant.index') }}',
+          ajax: {
+            url: '{{ url('addapplicant.index') }}',
+            type: 'POST',
+            data: {
+              idRequerimiento : idRequerimiento,
+              "_token": "{{ csrf_token() }}"
+            }
+          },
           columns: [
                    { data: 'check', name: 'check' },
                    { data: 'name', name: 'name' },
@@ -5312,8 +5357,9 @@ $(document).on("click", "#editarDatosPuesto", function(){
           ajax: {
                 url: '{{ url('deleteapplicant.index') }}',
                 data: { requerimiento: idRequerimiento,
-                        "_token": "{{ csrf_token() }}" },
-                        type: 'GET'
+                        "_token": "{{ csrf_token() }}" 
+                      },
+                type: 'POST'
           },
           columns: [
                    { data: 'name', name: 'name' },
@@ -5384,52 +5430,31 @@ $(document).on("click", "#editarDatosPuesto", function(){
         /* Read more about isConfirmed, isDenied below */
         if (result.isConfirmed) {
 
-           /* $.ajax({
+            $.ajax({
                 type: "GET",
                 dataType: 'JSON',
-                data: { idRequerimiento: idRequerimiento, status: 3, "_token": "{{ csrf_token() }}" },
-                url: "/statusrequirement/",
+                data: { idRequerimiento: idRequerimiento, "_token": "{{ csrf_token() }}" },
+                url: "/getrecruitment/",
                 success: function(msg){ 
-                if(msg == '1'){
-                    Lobibox.notify("success", {
+
+                  if(msg == -1){
+                    Lobibox.notify("warning", {
                         size: "mini",
                         rounded: true,
                         delay: 3000,
                         delayIndicator: false,
                         position: "center top",
-                        msg: "Requerimiento aceptado",
+                        msg: "Para aceptar un requerimiento es necesario ingresar la información general.",
                     });
-                    $("#buttonRecruitment").css('display','block');
-                    $("#buttonApplicant").css('display','block');
-*/
-                    $.ajax({
-                        type: "GET",
-                        dataType: 'JSON',
-                        data: { idRequerimiento: idRequerimiento, "_token": "{{ csrf_token() }}" },
-                        url: "/getrecruitment/",
-                        success: function(msg){ 
-
-                          $("#reclutador_id").html(msg);
-                          $("#agregarReclutadorModal").modal("show");
-                        }
-                    });
-                   /* 
-                    table.ajax.reload();
+                  }
+                  else{
+                    $("#reclutador_id").html(msg);
+                    $("#agregarReclutadorModal").modal("show");
+                  }
+                  
                 }
-                if(msg == '0'){
-                  Swal.fire({
-                    icon: 'warning',
-                    html:
-                      '<b>¡Error inesperado!</b><br> ' +
-                      'Ha ocurrido un error inesperado, favor de contactar a Soporte Técnico',
-                    showCloseButton: true,
-                    showCancelButton: false,
-                    focusConfirm: false,
-                    showConfirmButton: false
-                  });
-                }
-                }
-            });*/
+            });
+                 
 
         } else if (result.isDenied) {
             

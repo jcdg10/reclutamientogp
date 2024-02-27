@@ -10,27 +10,28 @@
 | contains the "web" middleware group. Now create something great!
 |
 */
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\LoginController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\ApplicantController;
-use App\Http\Controllers\ClientController;
-use App\Http\Controllers\RecruiterController;
-use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\LoginController;
 use App\Http\Controllers\CiudadController;
+use App\Http\Controllers\ClientController;
+use App\Http\Controllers\PerfilController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ApplicantController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\RecruiterController;
 use App\Http\Controllers\EspecialidadController;
-use App\Http\Controllers\ServicioRequeridoController;
 
 use App\Http\Controllers\Request\RequestController;
-use App\Http\Controllers\Request\RequestGeneralController;
-use App\Http\Controllers\Request\RequestPersonalController;
-use App\Http\Controllers\Request\RequestAcademicController;
+use App\Http\Controllers\ServicioRequeridoController;
 use App\Http\Controllers\Request\RequestJobController;
-use App\Http\Controllers\Request\RequestAdditionalController;
-use App\Http\Controllers\Request\RequestEconomicController;
-use App\Http\Controllers\Request\RequestProcessController;
 use App\Http\Controllers\Request\RequestFinalController;
+use App\Http\Controllers\Request\RequestGeneralController;
+use App\Http\Controllers\Request\RequestProcessController;
+use App\Http\Controllers\Request\RequestAcademicController;
+use App\Http\Controllers\Request\RequestEconomicController;
+use App\Http\Controllers\Request\RequestPersonalController;
+use App\Http\Controllers\Request\RequestAdditionalController;
 
 Route::get('/login',[UserController::class,'showLogin'])->name('show.login');
 Route::post('/login', [LoginController::class,'login'])->name('login');
@@ -56,11 +57,14 @@ Route::group(['middleware' => ['auth']], function() {
     Route::post('/applicantedit/{id}',[ApplicantController::class,'update']);
     Route::get('candidatos',[ApplicantController::class,'showApplicant'])->name('showApplicant');
     Route::get('applicant.index',[ApplicantController::class,'index']);
+    Route::post('/processapplicantdatagetall',[ApplicantController::class,'processapplicantdatagetall']);
     Route::post('/processapplicantdataget',[ApplicantController::class,'processapplicantdataget'])->name('processapplicantdataget');
     Route::get('/addcandidatovacante',[ApplicantController::class,'addCandidatoVacante'])->name('addCandidatoVacante');
     Route::post('/applicantaddfile',[ApplicantController::class,'addfile'])->name('addfile');
     Route::get('/getfilesbyapplicant/{id}',[ApplicantController::class,'getfiles']);
     Route::delete('/deletefile/{id}',[ApplicantController::class,'deletefiles']);
+    Route::post('/addperfil',[ApplicantController::class,'addPerfil']);
+    Route::delete('/deleteperfil/{id}',[ApplicantController::class,'deletePerfil']);
 
     Route::post('/applicantacademico',  [ApplicantController::class,'addAcademico']);
     Route::post('applicant.getApplicantAcademic',  [ApplicantController::class,'getAcademic']);
@@ -98,6 +102,12 @@ Route::group(['middleware' => ['auth']], function() {
     Route::put('/specialtyedit',[EspecialidadController::class,'update']);
     Route::get('especialidad',[EspecialidadController::class,'showEspecialidad'])->name('showEspecialidad');
     Route::get('specialty.index',[EspecialidadController::class,'index']);
+
+    /*PROFILE*/
+    Route::resource('profileactions', PerfilController::class);
+    Route::put('/profileedit',[PerfilController::class,'update']);
+    Route::get('perfiles',[PerfilController::class,'showPerfil'])->name('showPerfil');
+    Route::get('profile.index',[PerfilController::class,'index']);
 
     /*SERVICIOS REQUERIDOS*/
     Route::resource('requiredserviceactions', ServicioRequeridoController::class);
@@ -178,8 +188,8 @@ Route::group(['middleware' => ['auth']], function() {
     //Validate information
     Route::get('/validateinformation/{id}',[RequestController::class,'validateInformation'])->name('validateInformation');
     //add candidates
-    Route::get('addapplicant.index',[RequestController::class,'addapplicant'])->name('addapplicant');
-    Route::get('deleteapplicant.index',[RequestController::class,'deleteapplicant'])->name('deleteapplicant');
+    Route::post('addapplicant.index',[RequestController::class,'addapplicant'])->name('addapplicant');
+    Route::post('deleteapplicant.index',[RequestController::class,'deleteapplicant'])->name('deleteapplicant');
     Route::post('/addApplicantNew',[RequestController::class,'addApplicantNew'])->name('addApplicantNew');
     Route::delete('/deleteApplicantDo/{id}',[RequestController::class,'deleteApplicantDo'])->name('deleteApplicantDo'); 
     
@@ -188,7 +198,7 @@ Route::group(['middleware' => ['auth']], function() {
     Route::post('/getPermisosModulo/{id}',[RoleController::class,'getPermisosModulo'])->name('getPermisosModulo');
     Route::post('/modifypermissions',[RoleController::class,'modifyPermissions'])->name('modifyPermissions');
     Route::put('/roleedit',[RoleController::class,'update']);
-    Route::get('perfiles',[RoleController::class,'showRole'])->name('showRole');
+    Route::get('rolesperfiles',[RoleController::class,'showRole'])->name('showRole');
     Route::get('role.index',[RoleController::class,'index']);
 });
 

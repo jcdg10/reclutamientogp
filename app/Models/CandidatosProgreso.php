@@ -21,6 +21,7 @@ class CandidatosProgreso extends Model
         'referencias',
         'entrevista_tecnica',
         'estudio_socioeconomico',
-        'estatus'
+        'estatus',
+        'observaciones'
     ];
 }

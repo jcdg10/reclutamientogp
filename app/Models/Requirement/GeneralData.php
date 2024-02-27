@@ -22,6 +22,7 @@ class GeneralData extends Model
         'horario_inicio',
         'horario_fin',
         'ejecutivoen',
+        'perfil_id',
         'vacantes_id'
     ];
 }

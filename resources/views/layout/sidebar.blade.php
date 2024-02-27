@@ -74,8 +74,8 @@
       </li>
       <?php } ?>
       <?php if($roles_permisos[9]->permitido == 1){ ?>
-      <li class="nav-item {{ active_class(['perfiles']) }}">
-        <a href="{{ url('/perfiles') }}" class="nav-link">
+      <li class="nav-item {{ active_class(['rolesperfiles']) }}">
+        <a href="{{ url('/rolesperfiles') }}" class="nav-link">
           <i class="link-icon" data-feather="unlock"></i>
           <span class="link-title">Roles y permisos</span>
         </a>
@@ -102,6 +102,14 @@
         </a>
       </li>
       <?php } ?>
+      <?php if($roles_permisos[10]->permitido == 1){ ?>
+        <li class="nav-item {{ active_class(['perfiles']) }}">
+          <a href="{{ url('/perfiles') }}" class="nav-link">
+            <i class="link-icon" data-feather="layers"></i>
+            <span class="link-title">Perfiles</span>
+          </a>
+        </li>
+        <?php } ?>
       <?php if($roles_permisos[8]->permitido == 1){ ?>
       <li class="nav-item {{ active_class(['serviciorequerido']) }}">
         <a href="{{ url('/serviciorequerido') }}" class="nav-link">

@@ -22,7 +22,6 @@ class Applicant extends Model
         'correo',
         'ciudad',
         'pretensiones',
-        'perfil',
         'especialidad',
         'estatus_candidatos',
         'experiencia',

@@ -3,6 +3,9 @@
 @push('plugin-styles')
   <link href="{{ asset('assets/plugins/datatables-net-bs5/dataTables.bootstrap5.css') }}" rel="stylesheet" />
   <link href="{{ asset('assets/plugins/datatables/buttons.dataTables.min.css') }}" rel="stylesheet" />
+  <style>
+    .procesoTable tr:first-child{ border-bottom: 1px solid #d3d3d3;}
+  </style>
 @endpush
 
 @section('content')
@@ -130,13 +133,6 @@
           </div>
       </div>
       <div class="col-md-6">
-          <div class="mb-3">
-            <label for="profile" class="form-label">Perfil</label>
-            <input type="text" class="form-control alpha-only" id="profile" name="profile" placeholder="Perfil">
-            <div class="invalid-feedback" id="invalid-profile-required">El perfil es requerido</div>
-          </div>
-      </div>
-      <div class="col-md-6">
         <div class="mb-3">
           <label for="specialty" class="form-label">Especialidad</label>
           <select class="form-control" id="specialty" name="specialty">
@@ -152,7 +148,7 @@
       </div>
       <div class="col-md-6">
         <div class="mb-3">
-          <label for="city" class="form-label">Estatus</label>
+          <label for="estatus_candidatos" class="form-label">Estatus</label>
           <select class="form-select" id="estatus_candidatos" name="estatus_candidatos">
             <option value="">Selecciona un estatus</option>
             @foreach ($estatus_candidatos as $e)
@@ -165,6 +161,33 @@
       <div class="col-md-6">
           <label for="name">Foto:</label>
           <input type="file" id="profile_photo" name="profile_photo" class="form-control" accept="image/png, image/gif, image/jpeg, image/jpg, image/jiff, image/svg+xml"/>
+      </div>
+      <div class="col-md-6">
+        <div class="row">
+            <div class="col-md-8">
+              <label for="profile" class="form-label">Perfil</label>
+              <select class="form-control" id="profile" name="profile">
+                <option value="">Selecciona un perfil</option>
+                @foreach ($perfiles as $p)
+                  @if ($p->estatus == 1)
+                    <option value="{{ $p->id }}">{{ $p->perfil }}</option>
+                  @endif
+                @endforeach
+              </select>
+            </div>
+            <div class="col-md-4">
+              <button class="btn btn-success" id="add-profile" type="button" style="margin-top:28px;">Agregar</button>
+            </div>
+            <div class="invalid-feedback" id="invalid-profile-required">Necesitas agregar al menos un perfil.</div>
+            <div class="row mt-2 text-center">
+              <div class="col-md-6">
+                <div class="row">
+                  <div class="col-md-12" id="profile_list">
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
       </div>
       
 
@@ -283,13 +306,6 @@
                           </div>
                       </div>
                       <div class="col-md-6">
-                          <div class="mb-3">
-                            <label for="profile" class="form-label">Perfil</label>
-                            <input type="text" class="form-control alpha-only" id="profileEdit" name="profileEdit" placeholder="Perfil">
-                            <div class="invalid-feedback" id="invalid-profileEdit-required">El perfil es requerido</div>
-                          </div>
-                      </div>
-                      <div class="col-md-6">
                         <div class="mb-3">
                           <label for="specialty" class="form-label">Especialidad</label>
                           <select class="form-control" id="specialtyEdit" name="specialtyEdit">
@@ -310,13 +326,33 @@
                         </div>
                       </div>
                       <div class="col-md-6">
-                        <label for="name">Foto:</label>
-                        <input type="file" id="profile_photo_edit" name="profile_photo_edit" class="form-control" accept="image/png, image/gif, image/jpeg, image/jpg, image/jiff, image/svg+xml"/>
+                        &nbsp;
                       </div>
+                      
+                      <div class="col-md-6">
+                        <div class="row">
+                            <div class="col-md-8">
+                              <label for="profile_edit" class="form-label">Perfil</label>
+                              <select class="form-control" id="profile_edit" name="profile_edit">
+                                <option value="">Selecciona un perfil</option>
+                                @foreach ($perfiles as $p)
+                                  @if ($p->estatus == 1)
+                                    <option value="{{ $p->id }}">{{ $p->perfil }}</option>
+                                  @endif
+                                @endforeach
+                              </select>
+                            </div>
+                            <div class="col-md-4">
+                              <button class="btn btn-success" id="add-profile-edit" type="button" style="margin-top:28px;">Agregar</button>
+                            </div>
+                            <div class="invalid-feedback" id="invalid-profile-required">Necesitas agregar al menos un perfil.</div>
+                        </div>
+                      </div>
+
                       <div class="col-md-6" id="applicant_files">
                         <div class="row">
                           <div class="col-md-8">
-                            <label for="name">Documentación:</label>
+                            <label for="name">Documentación</label>
                             <input type="file" id="file_app" name="file_app" class="form-control" />
                             <div class="invalid-feedback" id="invalid-file_app-required">El archivo es requerido</div>
                           </div>
@@ -326,12 +362,18 @@
                         </div>
                       </div>
                         <div class="row mt-2 text-center">
-                          <div class="col-md-6" id="img_profile_photo">
+                          <div class="col-md-6">
+                            <div class="col-md-6">
+                              <div class="row">
+                                <div class="col-md-12" id="profile_list_edit">
+                                </div>
+                              </div>
+                            </div>
                           </div>
                           <div class="col-md-6">
                             <div class="row">
                               <div class="col-md-12">
-                                <label for="name"><b>Documentación:</b></label>
+                                <label for="name"><b>Documentación</b></label>
                               </div>
                             </div>
                             <div class="row">
@@ -340,6 +382,18 @@
                             </div>
                           </div>
                         </div>
+                        <div class="col-md-6">
+                          <label for="name">Foto:</label>
+                          <input type="file" id="profile_photo_edit" name="profile_photo_edit" class="form-control" accept="image/png, image/gif, image/jpeg, image/jpg, image/jiff, image/svg+xml"/>
+                        </div>
+                        <div class="col-md-6">
+                          &nbsp;
+                        </div>
+                        <div class="row mt-2 text-center">
+                          <div class="col-md-6" id="img_profile_photo">
+                          </div>
+                        </div>
+
 
                           <div class="row">
                             <div class="col-lg-12 invalid-feedback showErrorsEdit"><br>
@@ -395,180 +449,14 @@
             <!-- BEGINNING TAB PROCESO -->
             <div class="tab-pane fade" id="procesoDiv" role="tabpanel" aria-labelledby="proceso-tab">
               <span id="hideProcesoDiv">
-              <p class="hp-p1-body mb-0">
+                <p class="hp-p1-body mb-0">
 
-                <form action="#" method="POST" id="agregarDatosProceso">
+                  <div class="row" id="show_requirements" style="margin-top: 10px;margin-right: 20px;">
 
-                  <input type="hidden" id="idProcesoUnico" name="idProcesoUnico" />
-                    <div class="row" style="margin-top: 10px;">
-                      <div class="col-md-12">
-                          <div class="mb-3">
-                            <label for="namePosition" class="form-label">Nombre del puesto</label>
-                            <input type="text" class="form-control" id="namePosition" name="namePosition" readonly>
-                          </div>
-                      </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                              <label for="duracion" class="form-label">Duración estimada del proceso</label>
-                              <input type="text" class="form-control" id="duracion" name="duracion" maxlength="100" readonly>
-                              <div class="invalid-feedback" id="invalid-duracion-required">La duración es requerida</div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                          <div class="mb-3">
-                              <label for="cantidadfiltros" class="form-label">Cantidad de filtros a realizar</label>
-                              <input type="number" class="form-control" id="cantidadfiltros" name="cantidadfiltros"readonly>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                      <div class="col-md-6">
-                          <div class="mb-3">
-                            <label for="niveles_flitro" class="form-label">Niveles que participan en el filtro</label>
-                            <input type="text" class="form-control" id="niveles_flitro" name="niveles_flitro" readonly>
-                          </div>
-                      </div>
-                      <div class="col-md-6">
-                        &nbsp;
-                      </div>
-                    </div>
-                    <div class="row">
-                      <div class="col-md-12">
-                          <div class="mb-3">
-                            <label for="proceso" class="form-label">Indicar si el candidato cumplió con las especificaciones y niveles del proceso:</label>
-                            <div class="row" >
-                              <div class="col-12" id="field1">
-                                  <div class="col-3">
-                                    <label class="radio">Entrevista filtro</label>
-                                  </div>
-                                  <div class="col-1">
-                                    <input type="radio" id="entrevista1" name="entrevista" class="classentrevista" value="1">
-                                    <label for="entrevista">Sí</label>
-                                  </div>
-                                  <div class="col-1">
-                                    <input type="radio" id="entrevista2" name="entrevista" class="classentrevista" value="0">
-                                    <label for="entrevista">No</label>   
-                                  </div>
-                                  <div class="col-7"></div>                           
-                              </div>
-                              <div class="col-12" id="field2">
-                                  <div class="col-3">
-                                    <label class="radio">Prueba técnica</label>
-                                  </div>
-                                  <div class="col-1">
-                                    <input type="radio" id="pruebat1" name="pruebat" class="classpruebat" value="1">
-                                    <label for="entrevista">Sí</label>
-                                  </div>
-                                  <div class="col-1">
-                                    <input type="radio" id="pruebat2" name="pruebat" class="classpruebat" value="0">
-                                    <label for="entrevista">No</label>   
-                                  </div>
-                                  <div class="col-7"></div>
-                              </div>
-                              <div class="col-12" id="field3">
-                                  <div class="col-3">
-                                    <label class="radio">Pruebas psicométricas</label>
-                                  </div>
-                                  <div class="col-1">
-                                    <input type="radio" id="pruebap1" name="pruebap" class="classpruebap" value="1">
-                                    <label for="entrevista">Sí</label>
-                                  </div>
-                                  <div class="col-1">
-                                    <input type="radio" id="pruebap2" name="pruebap" class="classpruebap" value="0">
-                                    <label for="entrevista">No</label>   
-                                  </div>
-                                  <div class="col-7"></div>
-                              </div>
-                              <div class="col-12" id="field4">
-                                  <div class="col-3">
-                                    <label class="radio">Referencias</label>
-                                  </div>
-                                  <div class="col-1">
-                                    <input type="radio" id="referencias1" name="referencias" class="classreferencias" value="1">
-                                    <label for="entrevista">Sí</label>
-                                  </div>
-                                  <div class="col-1">
-                                    <input type="radio" id="referencias2" name="referencias" class="classreferencias" value="0">
-                                    <label for="entrevista">No</label>   
-                                  </div>
-                                  <div class="col-7"></div>
-                              </div>
-                              <div class="col-12" id="field5">
-                                  <div class="col-3">
-                                    <label class="radio">Entrevista técnica</label>
-                                  </div>
-                                  <div class="col-1">
-                                    <input type="radio" id="entrevista_tecnica1" name="entrevista_tecnica" class="classentrevista_tecnica" value="1">
-                                    <label for="entrevista">Sí</label>
-                                  </div>
-                                  <div class="col-1">
-                                    <input type="radio" id="entrevista_tecnica2" name="entrevista_tecnica" class="classentrevista_tecnica" value="0">
-                                    <label for="entrevista">No</label>   
-                                  </div>
-                                  <div class="col-7"></div>
-                              </div>
-                              <div class="col-12" id="field6">
-                                  <div class="col-3">
-                                    <label class="radio">Estudio socioeconómico</label>
-                                  </div>
-                                  <div class="col-1">
-                                    <input type="radio" id="estudio_socioeconomico1" name="estudio_socioeconomico" class="classestudio_socioeconomico" value="1">
-                                    <label for="entrevista">Sí</label>
-                                  </div>
-                                  <div class="col-1">
-                                    <input type="radio" id="estudio_socioeconomico2" name="estudio_socioeconomico" class="classestudio_socioeconomico" value="0">
-                                    <label for="entrevista">No</label>   
-                                  </div>
-                                  <div class="col-7"></div>
-                              </div>
-                            </div>
-                            
-                            <div class="row mt-4">
-                              <div class="col-12">
-                                <label class="radio">Estado del candidato <span id="nameCandidato"></span></label>
-                              </div>
-                            </div>
-                            <div class="row">
-                              <div class="col-12 text center">
-                                <select class="form-select" id="estatus_candidato" name="estatus_candidato" style="width:50%;">
-                                  @foreach ($estatus_candidatos as $e)
-                                      <option value="{{ $e->id }}">{{ $e->estatus }}</option>
-                                  @endforeach
-                                </select>
-                              </div>
-                              <!--<div class="col-3">
-                                <input type="radio" id="estatus_candidato_1" name="estatus_candidato" class="classestatus_candidato" value="1">
-                                <label for="estatus_candidato">Contratar</label> 
-                              </div>
-                              <div class="col-3">
-                                <input type="radio" id="estatus_candidato_0" name="estatus_candidato" class="classestatus_candidato" value="0">
-                                <label for="estatus_candidato">Rechazar</label> 
-                              </div>
-                              <div class="col-3">
-                                <input type="radio" id="estatus_candidato_2" name="estatus_candidato" class="classestatus_candidato" value="2">
-                                <label for="estatus_candidato">Pendiente</label> 
-                              </div>-->
-                            </div>
-
-                          </div>
-                      </div>
-                    </div>
-
-                    <div class="row">
-                      <div class="col-lg-12 alert alert-danger alert-dismissible fade show" id="erroresAgregar" style="display: none;">
-                      </div>
-                    </div>
-                    <div class="text-center" id="loadingSProcess" style="visibility: hidden;">
-                      <div class="spinner-border hp-border-color-dark-40 text-primary" role="status">
-                          <span class="visually-hidden">Loading...</span>
-                      </div>
-                    </div>
-              
-              </form>
-            </p>
-            </span>
+                  </div>
+                  
+                </p>
+              </span>
           </div>
           <!-- END TAB INFORMACION -->
 
@@ -583,7 +471,6 @@
         <button type="button" class="btn btn-primary me-2" id="modificarCandidato">Guardar</button>
         <button type="button" class="btn btn-primary me-2" id="generarAcademicoNuevo">Agregar estudios</button>
         <button type="button" class="btn btn-primary me-2" id="generarExperienciaNuevo">Agregar experiencia</button>
-        <button type="button" class="btn btn-primary me-2" id="generarProcesoNuevo">Guardar proceso</button>
       </div>
     </div>
     </form>
@@ -942,6 +829,197 @@
   </div>
 </div>
 
+<!-- Proceso Modal -->
+<div class="modal fade" id="procesoModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <form action="#" method="POST" id="agregarDatosProceso">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="exampleModalLabel">Información proceso</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+
+        <input type="hidden" id="idProcesoUnico" name="idProcesoUnico" />
+        <div class="row" style="margin-top: 10px;">
+          <div class="col-md-12">
+              <div class="mb-3">
+                <label for="namePosition" class="form-label">Nombre del puesto</label>
+                <input type="text" class="form-control" id="namePosition" name="namePosition" readonly>
+              </div>
+          </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="duracion" class="form-label">Duración estimada del proceso</label>
+                  <input type="text" class="form-control" id="duracion" name="duracion" maxlength="100" readonly>
+                  <div class="invalid-feedback" id="invalid-duracion-required">La duración es requerida</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                  <label for="cantidadfiltros" class="form-label">Cantidad de filtros a realizar</label>
+                  <input type="number" class="form-control" id="cantidadfiltros" name="cantidadfiltros"readonly>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+              <div class="mb-3">
+                <label for="niveles_flitro" class="form-label">Niveles que participan en el filtro</label>
+                <input type="text" class="form-control" id="niveles_flitro" name="niveles_flitro" readonly>
+              </div>
+          </div>
+          <div class="col-md-6">
+                <label class="form-label">Estado del candidato <span id="nameCandidato"></span></label>
+                <select class="form-select" id="estatus_candidato" name="estatus_candidato">
+                  @foreach ($estatus_candidatos as $e)
+                      <option value="{{ $e->id }}">{{ $e->estatus }}</option>
+                  @endforeach
+                </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12">
+              <div class="mb-3">
+                <label for="proceso" class="form-label">Indicar si el candidato cumplió con las especificaciones y niveles del proceso:</label>
+                <div class="row" >
+                  <div class="col-12" id="field1">
+                      <div class="col-3">
+                        <label class="radio">Entrevista filtro</label>
+                      </div>
+                      <div class="col-1">
+                        <input type="radio" id="entrevista1" name="entrevista" class="classentrevista" value="1">
+                        <label for="entrevista">Sí</label>
+                      </div>
+                      <div class="col-1">
+                        <input type="radio" id="entrevista2" name="entrevista" class="classentrevista" value="0">
+                        <label for="entrevista">No</label>   
+                      </div>
+                      <div class="col-7"></div>                           
+                  </div>
+                  <div class="col-12" id="field2">
+                      <div class="col-3">
+                        <label class="radio">Prueba técnica</label>
+                      </div>
+                      <div class="col-1">
+                        <input type="radio" id="pruebat1" name="pruebat" class="classpruebat" value="1">
+                        <label for="entrevista">Sí</label>
+                      </div>
+                      <div class="col-1">
+                        <input type="radio" id="pruebat2" name="pruebat" class="classpruebat" value="0">
+                        <label for="entrevista">No</label>   
+                      </div>
+                      <div class="col-7"></div>
+                  </div>
+                  <div class="col-12" id="field3">
+                      <div class="col-3">
+                        <label class="radio">Pruebas psicométricas</label>
+                      </div>
+                      <div class="col-1">
+                        <input type="radio" id="pruebap1" name="pruebap" class="classpruebap" value="1">
+                        <label for="entrevista">Sí</label>
+                      </div>
+                      <div class="col-1">
+                        <input type="radio" id="pruebap2" name="pruebap" class="classpruebap" value="0">
+                        <label for="entrevista">No</label>   
+                      </div>
+                      <div class="col-7"></div>
+                  </div>
+                  <div class="col-12" id="field4">
+                      <div class="col-3">
+                        <label class="radio">Referencias</label>
+                      </div>
+                      <div class="col-1">
+                        <input type="radio" id="referencias1" name="referencias" class="classreferencias" value="1">
+                        <label for="entrevista">Sí</label>
+                      </div>
+                      <div class="col-1">
+                        <input type="radio" id="referencias2" name="referencias" class="classreferencias" value="0">
+                        <label for="entrevista">No</label>   
+                      </div>
+                      <div class="col-7"></div>
+                  </div>
+                  <div class="col-12" id="field5">
+                      <div class="col-3">
+                        <label class="radio">Entrevista técnica</label>
+                      </div>
+                      <div class="col-1">
+                        <input type="radio" id="entrevista_tecnica1" name="entrevista_tecnica" class="classentrevista_tecnica" value="1">
+                        <label for="entrevista">Sí</label>
+                      </div>
+                      <div class="col-1">
+                        <input type="radio" id="entrevista_tecnica2" name="entrevista_tecnica" class="classentrevista_tecnica" value="0">
+                        <label for="entrevista">No</label>   
+                      </div>
+                      <div class="col-7"></div>
+                  </div>
+                  <div class="col-12" id="field6">
+                      <div class="col-3">
+                        <label class="radio">Estudio socioeconómico</label>
+                      </div>
+                      <div class="col-1">
+                        <input type="radio" id="estudio_socioeconomico1" name="estudio_socioeconomico" class="classestudio_socioeconomico" value="1">
+                        <label for="entrevista">Sí</label>
+                      </div>
+                      <div class="col-1">
+                        <input type="radio" id="estudio_socioeconomico2" name="estudio_socioeconomico" class="classestudio_socioeconomico" value="0">
+                        <label for="entrevista">No</label>   
+                      </div>
+                      <div class="col-7"></div>
+                  </div>
+                </div>
+                
+                <div class="row mt-4">
+                  <div class="col-12">
+                    
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-12 text center">
+                    <label for="observaciones" class="form-label">Observaciones:</label>
+                    <textarea id="observaciones" name="observaciones" class="form-control" rows="3" cols="50"></textarea>
+                  </div>
+                  <!--<div class="col-3">
+                    <input type="radio" id="estatus_candidato_1" name="estatus_candidato" class="classestatus_candidato" value="1">
+                    <label for="estatus_candidato">Contratar</label> 
+                  </div>
+                  <div class="col-3">
+                    <input type="radio" id="estatus_candidato_0" name="estatus_candidato" class="classestatus_candidato" value="0">
+                    <label for="estatus_candidato">Rechazar</label> 
+                  </div>
+                  <div class="col-3">
+                    <input type="radio" id="estatus_candidato_2" name="estatus_candidato" class="classestatus_candidato" value="2">
+                    <label for="estatus_candidato">Pendiente</label> 
+                  </div>-->
+                </div>
+
+              </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-lg-12 alert alert-danger alert-dismissible fade show" id="erroresAgregar" style="display: none;">
+          </div>
+        </div>
+        <div class="text-center" id="loadingSProcess" style="visibility: hidden;">
+          <div class="spinner-border hp-border-color-dark-40 text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+
+       
+      </div>
+      <div class="modal-footer">
+        <button type="button"class="btn btn-secondary" id="cancelarProceso" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary me-2" id="generarProcesoNuevo">Guardar proceso</button>
+      </div>
+    </div>
+    </form>
+  </div>
+</div>
+
 @endsection
 
 @push('plugin-scripts')
@@ -1046,6 +1124,11 @@
        });
     });
 
+  $("#generarCandidatoNuevo").click(function(){
+        array_profiles = [];
+        $("#profile_list").html("");
+  });
+
   let errores = 0;
   $("#guardarCandidato").click(function(){
 
@@ -1131,15 +1214,6 @@
             $("#invalid-pretensions-required").removeClass("showFeedback");
         }
 
-        //validar profile
-        if(profile == '' || profile == null){
-            $("#invalid-profile-required").addClass("showFeedback");
-            errores++;
-        }
-        else{
-            $("#invalid-profile-required").removeClass("showFeedback");
-        }
-
         //validar specialty
         if(specialty == '' || specialty == null){
             $("#invalid-specialty-required").addClass("showFeedback");
@@ -1156,6 +1230,15 @@
         }
         else{
             $("#invalid-estatus_candidatos-required").removeClass("showFeedback");
+        }
+
+        //validar profile
+        if(array_profiles.length < 1){
+            $("#invalid-profile-required").addClass("showFeedback");
+            errores++;
+        }
+        else{
+            $("#invalid-profile-required").removeClass("showFeedback");
         }
 
         if(errores > 0){
@@ -1182,6 +1265,7 @@
         formData.append('profile', profile);
         formData.append('specialty', specialty);
         formData.append('applicant_status', applicant_status);
+        formData.append('array_profiles', array_profiles);
         formData.append('profile_photo', $('#profile_photo')[0].files[0]);
         formData.append('_token', "{{ csrf_token() }}");
 
@@ -1207,6 +1291,7 @@
                       table.ajax.reload();
                       $("#agregarCandidato").trigger("reset");
                       $("#agregarCandidatoModal").modal('hide');
+                      array_profiles = [];
                   }
 
                   if(msg == '0'){
@@ -1260,7 +1345,6 @@
       let email = $("#emailEdit").val().trim();
       let city = $("#cityEdit").val().trim();
       let pretensions = $("#pretensionsEdit").val().trim();
-      let profile = $("#profileEdit").val().trim();
       let specialty = $("#specialtyEdit").val().trim();
       let applicant_status = $("#estatus_candidatosEdit").val().trim();
 
@@ -1335,15 +1419,6 @@
           $("#invalid-pretensions-required").removeClass("showFeedback");
       }
 
-      //validar profile
-      if(profile == '' || profile == null){
-          $("#invalid-profile-required").addClass("showFeedback");
-          erroresEdit++;
-      }
-      else{
-          $("#invalid-profile-required").removeClass("showFeedback");
-      }
-
       //validar specialty
       if(specialty == '' || specialty == null){
           $("#invalid-specialty-required").addClass("showFeedback");
@@ -1383,7 +1458,6 @@
       formData.append('correo', email);
       formData.append('city', city);
       formData.append('pretensions', pretensions);
-      formData.append('profile', profile);
       formData.append('specialty', specialty);
       formData.append('applicant_status', applicant_status);
       if( $('#profile_photo_edit').val() != ''){
@@ -1497,24 +1571,18 @@
               
               $("#modificarCandidato").css('display','inline-flex');   
               $("#generarExperienciaNuevo").css('display','none');
-              $("#generarProcesoNuevo").css('display','none'); 
               $("#generarAcademicoNuevo").css('display','none');
 
               $("#img_profile_photo").html("<img src='" + msg.route_image +"' class='rounded' style='height:150px; width:auto;' />");
-
-              if(msg.estatus_op == 0 || msg.estatus_op == 5){
-                $("#proceso-tab").css("visibility","hidden");
-              }
-              if(msg.estatus_op == 1){
-                if(msg.reclutador == 1){
-                  $("#proceso-tab").css("visibility","visible");
-                }
-                else{
-                  $("#proceso-tab").css("visibility","hidden");
-                }
-                
-              }
+              
               getFiles(id);
+
+              $("#profile_list_edit").html(msg.info_perfiles);
+
+              array_profiles = []; 
+              msg.ids_perfiles.forEach(function(val, index) {
+                array_profiles.push(val);
+              });
               
               $("#modificarCandidatoModal").modal("show");
               
@@ -1631,6 +1699,180 @@
             }
         }); 
     }
+
+    let array_profiles = [];
+    $("#add-profile").click(function(){
+      let id_profile = $("#profile").val();
+
+      if(id_profile == ""){
+        Lobibox.notify("warning", {
+            size: "mini",
+            rounded: true,
+            delay: 3000,
+            delayIndicator: false,
+            position: "center top",
+            msg: "Selecciona un perfil",
+        });
+        return;
+      }
+
+      let position = array_profiles.indexOf(id_profile) + 1;
+      if(position > 0){
+        return;
+      }
+
+      let profile = $( "#profile option:selected" ).text();
+      array_profiles.push(id_profile);
+      position = array_profiles.indexOf(id_profile);
+
+      let info = "<div class='row' style='display:block;' id='prof_" + id_profile + "' >" +
+      profile + 
+      "<span class='delete_profile' id='" + id_profile + "' style='font-weight:600; color: red;cursor: pointer;'>X</span>" +
+      "</div>";
+      $("#profile_list").append(info);
+    });
+
+  $(document).on("click", ".delete_profile", function(){
+        let data = this.id;
+        const dataArr = data.split("_");
+        let id = dataArr[0];
+
+        let position = array_profiles.indexOf(id);
+        array_profiles.splice(position, 1);
+        $("#prof_" + id).remove();
+  });
+
+  $("#add-profile-edit").click(function(){
+      let id_profile = $("#profile_edit").val();
+      let idAplicante = $("#idAplicanteEdit").val().trim();
+
+      if(id_profile == ""){
+        Lobibox.notify("warning", {
+            size: "mini",
+            rounded: true,
+            delay: 3000,
+            delayIndicator: false,
+            position: "center top",
+            msg: "Selecciona un perfil",
+        });
+        return;
+      }
+
+      let profile = $( "#profile_edit option:selected" ).text();
+
+      let formData = new FormData();
+      formData.append('candidato_id', idAplicante);
+      formData.append('perfil_id',id_profile);
+      formData.append('_token', "{{ csrf_token() }}");
+
+      $.ajax({
+          type: "POST",
+          data: formData,
+          cache:false,
+          contentType: false,
+          processData: false,
+          url: "/addperfil",
+          success: function(msg){ 
+          //console.log(msg);
+            if(msg > -1){
+
+                let info = "<div class='row' style='display:block;' id='editprof_" + msg + "' >" +
+                profile + 
+                "<span class='delete_profile_edit' id='" + msg + "' style='font-weight:600; color: red;cursor: pointer;'>X</span>" +
+                "</div>";
+                $("#profile_list_edit").append(info);
+
+                array_profiles.push(msg);
+                table.ajax.reload();
+            }
+
+          },
+          error: function (err) {
+            //console.log(err);
+            Lobibox.notify("error", {
+              size: "mini",
+              rounded: true,
+              delay: 3000,
+              delayIndicator: false,
+              position: "center top",
+              msg: "Ha ocurrido un error, intenta nuevamente.",
+            }); 
+          }
+      }); 
+
+    });
+
+    $(document).on("click", ".delete_profile_edit", function(){
+        let data = this.id;
+        const dataArr = data.split("_");
+        let id = dataArr[0];
+        
+        Swal.fire({
+          title: "¿Deseas eliminar este perfil del candidato?",
+          showCancelButton: true,
+          cancelButtonText: 'Cancelar',
+          confirmButtonText: 'Aceptar',
+          reverseButtons : true,
+          allowOutsideClick: false,
+        }).then((result) => {
+        /* Read more about isConfirmed, isDenied below */
+        if (result.isConfirmed) {
+
+            $.ajax({
+                type: "DELETE",
+                dataType: 'JSON',
+                data: { "_token": "{{ csrf_token() }}" },
+                url: "/deleteperfil/" + id,
+                success: function(msg){ 
+
+                if(msg == -1){
+                  Lobibox.notify("warning", {
+                      size: "mini",
+                      rounded: true,
+                      delay: 3000,
+                      delayIndicator: false,
+                      position: "center top",
+                      msg: "No puedes eliminar el último perfil.",
+                  });
+
+                }
+
+                if(msg == '1'){
+                    let position = array_profiles.indexOf(id);
+                    array_profiles.splice(position, 1);
+                    $("#editprof_" + id).remove();
+
+                    Lobibox.notify("success", {
+                        size: "mini",
+                        rounded: true,
+                        delay: 3000,
+                        delayIndicator: false,
+                        position: "center top",
+                        msg: "Perfil eliminado",
+                    });
+                    table.ajax.reload();
+                }
+                if(msg == '0'){
+                  Swal.fire({
+                    icon: 'warning',
+                    html:
+                      '<b>¡Error inesperado!</b><br> ' +
+                      'Ha ocurrido un error inesperado, favor de contactar a Soporte Técnico',
+                    showCloseButton: true,
+                    showCancelButton: false,
+                    focusConfirm: false,
+                    showConfirmButton: false
+                  });
+                }
+                }
+            });
+
+        } else if (result.isDismissed) {
+          
+
+          }
+        })
+    });
 
     $(document).on("click", ".desactivar, .activar", function(){
         let check = this.id;
@@ -2562,7 +2804,6 @@
       $("#modificarCandidato").css('display','inline-flex');   
       $("#generarExperienciaNuevo").css('display','none'); 
       $("#generarAcademicoNuevo").css('display','none');
-      $("#generarProcesoNuevo").css('display','none');
     });
 
     
@@ -2570,7 +2811,6 @@
       $("#modificarCandidato").css('display','none');   
       $("#generarExperienciaNuevo").css('display','none');
       $("#generarAcademicoNuevo").css('display','inline-flex');
-      $("#generarProcesoNuevo").css('display','none');
 
       let id = $("#idAplicanteEdit").val().trim();
       cargarAcademico(id);
@@ -2581,7 +2821,6 @@
       $("#modificarCandidato").css('display','none');   
       $("#generarExperienciaNuevo").css('display','inline-flex');
       $("#generarAcademicoNuevo").css('display','none');
-      $("#generarProcesoNuevo").css('display','none');
 
       let id = $("#idAplicanteEdit").val().trim();
       cargarExperience(id);
@@ -2592,10 +2831,10 @@
       $("#modificarCandidato").css('display','none');   
       $("#generarExperienciaNuevo").css('display','none');
       $("#generarAcademicoNuevo").css('display','none');
-      $("#generarProcesoNuevo").css('display','inline-flex');
 
       let id = $("#idAplicanteEdit").val().trim();
-      cargarProceso(id);
+      showProcesos(id);
+      //cargarProceso(id);
         
     });
 
@@ -2629,9 +2868,40 @@
         });
     }
 
+    function showProcesos(id){
+      $("#hideProcesoDiv").css("visibility",'hidden');
+      $.ajax({
+            type: "POST",
+            dataType: 'JSON',
+            data: { id: id, "_token": "{{ csrf_token() }}" },
+            url: "processapplicantdatagetall",
+            success: function(msg){ 
+              //console.log(msg);
+              
+              if(msg.estatus_op == 1){
+                    
+                    $("#show_requirements").html(msg.table_info);
+                    $("#hideProcesoDiv").css("visibility",'visible');
+              }
+              if(msg.estatus_op == -1){
+                let data = "<div class='row mb-4 mt-4 ms-4'>" + "No hay requerimientos asignados" + "</div>";
+                $("#show_requirements").html(data);
+                $("#hideProcesoDiv").css("visibility",'visible');
+              }
+              
+            
+            }
+        });
+    }
+
+    $(document).on("click", ".ver_proceso", function () {
+        let id = this.id;
+
+        cargarProceso(id);
+    });
+
     let field1, field2, field3, field4, field5, field6;
     function cargarProceso(id){
-      $("#hideProcesoDiv").css("visibility",'hidden');
       $.ajax({
             type: "POST",
             dataType: 'JSON',
@@ -2641,11 +2911,15 @@
               //console.log(msg);
               
               if(msg.estatus_op == 1){
+
+                    $('#procesoModal').modal('show');
+
                     $("#namePosition").val(msg.nombre_puesto);
                     $("#duracion").val(msg.duracion);
                     $("#cantidadfiltros").val(msg.cantidadfiltros);
                     $("#niveles_flitro").val(msg.niveles_flitro);
                     $("#idVacanteEdit").val(msg.vacantes_id);
+                    $("#observaciones").val(msg.observaciones);
 
                     if(msg.entrevista == 1){
                       $("#field1").css("display", "flex");
@@ -2771,13 +3045,8 @@
                       $("#estudio_socioeconomico2").prop("checked", false);
                     }
 
-                    let true_estatus;
-                    if(msg.estatus == 1){ true_estatus = 4; }
-                    if(msg.estatus == 2){ true_estatus = 2; }
-                    if(msg.estatus == 0){ true_estatus = 3; }
-                    if(msg.estatus == 3){ true_estatus = 5; }
-                    $("#estatus_candidato").val(true_estatus);
-
+                    $("#estatus_candidato").val(msg.estatus);
+                    $("#nameCandidato").html(msg.nameCandidato);
 
                     if(msg.estatus != 2){
                       $(".classentrevista").prop("disabled", true);
@@ -2787,6 +3056,8 @@
                       $(".classestudio_socioeconomico").prop("disabled", true);
                       $(".classentrevista_tecnica").prop("disabled", true);
                       $("#estatus_candidato").prop("disabled", true);
+                      $("#observaciones").prop("disabled", true);
+                      $("#generarProcesoNuevo").prop("disabled", true);
                     }
                     else{
                       $(".classentrevista").prop("disabled", false);
@@ -2796,9 +3067,10 @@
                       $(".classestudio_socioeconomico").prop("disabled", false);
                       $(".classentrevista_tecnica").prop("disabled", false);
                       $("#estatus_candidato").prop("disabled", false);
+                      $("#observaciones").prop("disabled", false);
+                      $("#generarProcesoNuevo").prop("disabled", false);
                     }
 
-                    $("#hideProcesoDiv").css("visibility",'visible');
               }
               if(msg.estatus_op == 5){
                 Swal.fire({
@@ -2811,21 +3083,8 @@
                   focusConfirm: false,
                   showConfirmButton: false
                 });
-                $( "#info-tab" ).trigger( "click" );
               }
-              if(msg.estatus_op == 0){
-                Swal.fire({
-                  icon: 'warning',
-                  html:
-                    '<b>Alerta</b><br> ' +
-                    'Este candidato no tiene asignado ningún proceso de reclutamiento.',
-                  showCloseButton: true,
-                  showCancelButton: false,
-                  focusConfirm: false,
-                  showConfirmButton: false
-                });
-                $( "#info-tab" ).trigger( "click" );
-              }
+              
             
             }
         });
@@ -2834,6 +3093,7 @@
     $("#generarProcesoNuevo").click(function(){
 
       let idAplicante = $("#idAplicanteEdit").val().trim();
+      let observaciones = $("#observaciones").val().trim();
       let entrevista = 0, prueba_tecnica = 0, prueba_psicometrica = 0;
       let referencia = 0, entrevista_tecnica = 0, estudio_socioeconomico = 0;
       let vacante_id = $("#idVacanteEdit").val().trim();    
@@ -2917,7 +3177,7 @@
 
           saveApplicant(entrevista, prueba_tecnica, prueba_psicometrica,
                       referencia, entrevista_tecnica, estudio_socioeconomico,
-                      estatus_candidato, vacante_id, idAplicante);
+                      estatus_candidato, vacante_id, idAplicante, observaciones);
 
             
 
@@ -2970,7 +3230,7 @@
 
   function saveApplicant(entrevista, prueba_tecnica, prueba_psicometrica,
                          referencia, entrevista_tecnica, estudio_socioeconomico,
-                         estatus_candidato, vacante_id, idAplicante){
+                         estatus_candidato, vacante_id, idAplicante, observaciones){
       
       $.ajax({
           type: "GET",
@@ -2983,6 +3243,7 @@
                   estatus_candidato: estatus_candidato,
                   vacante_id: vacante_id,
                   candidato_id: idAplicante,
+                  observaciones: observaciones,
                   "_token": "{{ csrf_token() }}" },
           dataType: 'JSON',
           url: "/addcandidatovacante/",
@@ -2998,6 +3259,8 @@
                 position: "center top",
                 msg: "Información del proceso guardada.",
                 });
+                showProcesos(idAplicante);
+                $('#procesoModal').modal('hide');
                 table.ajax.reload();
             }
 

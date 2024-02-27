@@ -18,6 +18,8 @@ class RequestGeneralController extends Controller
             'position' => ['required',
                         'max:100'
             ],
+            'profile' => ['required'
+            ],
             'numVacant' => ['required'
             ],
             'requestDate' => ['required'
@@ -35,6 +37,7 @@ class RequestGeneralController extends Controller
 
         
         $generaldata->puesto = $request->position;
+        $generaldata->perfil_id = $request->profile;
         $generaldata->novacantes = $request->numVacant;
         $generaldata->fechasolicitud = $request->requestDate;
         $generaldata->serviciore = $request->requestService;
@@ -110,10 +113,9 @@ class RequestGeneralController extends Controller
             'position' => ['required',
                         'max:100'
             ],
-            'numVacant' => ['required'
-            ],
-            'requestDate' => ['required'
-            ],
+            'profile' => ['required'],
+            'numVacant' => ['required'],
+            'requestDate' => ['required']
         ]);
 
         if($request->idGeneralUnico == ''){
@@ -127,6 +129,7 @@ class RequestGeneralController extends Controller
 
         
         $generaldata->puesto = $request->position;
+        $generaldata->perfil_id = $request->profile;
         $generaldata->novacantes = $request->numVacant;
         $generaldata->fechasolicitud = $request->requestDate;
         $generaldata->serviciore = $request->requestService;
