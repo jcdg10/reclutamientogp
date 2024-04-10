@@ -20,6 +20,8 @@ class ApplicantController extends Controller
 {
     public function index()
     {
+        config()->set('database.connections.mysql.strict', false);
+        \DB::reconnect();
 
         $applicants = DB::table('candidatos as c')
         ->selectRaw('c.idcandidato as id, c.nombres, c.apellidos, c.edad, 
@@ -45,8 +47,11 @@ class ApplicantController extends Controller
         ->groupBy(
         'c.idcandidato','c.nombres','c.apellidos','c.edad',
         'c.pretensiones', 'c.estatus', 'ec.estatus', 
-        'ec.color', 'v.cliente_id')
-        ->get();       
+        'ec.color')
+        ->get();     
+        //, 'v.cliente_id'
+        config()->set('database.connections.mysql.strict', true);
+        \DB::reconnect();
         
         $roles = DB::table('permisos')
         ->where('rol_id','=', auth()->user()->roles_id)
